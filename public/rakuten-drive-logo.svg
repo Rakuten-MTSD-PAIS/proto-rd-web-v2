@@ -1,0 +1,9 @@
+<svg width="130" height="23" viewBox="0 0 130 23" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Rakuten Drive">
+  <text x="0" y="18" fill="#002896" font-family="Arial, sans-serif" font-size="16" font-weight="700">Rakuten</text>
+  <rect x="66" y="3" width="4" height="4" fill="#00B900"/>
+  <rect x="66" y="8" width="4" height="4" fill="#7D00BE"/>
+  <rect x="66" y="13" width="4" height="4" fill="#00A0F0"/>
+  <path d="M71 6c3-3 7-3 9 0l-3 3c-1-1-2-1-3 0l-3-3Z" fill="#F59600"/>
+  <path d="M71 15c3 3 7 3 9 0l-3-3c-1 1-2 1-3 0l-3 3Z" fill="#FF41BE"/>
+  <text x="81" y="18" fill="#002896" font-family="Arial, sans-serif" font-size="16" font-weight="700">Drive</text>
+</svg>

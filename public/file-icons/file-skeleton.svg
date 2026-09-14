@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="32" height="36" viewBox="0 0 32 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="file-skeleton">
+<path id="Mask" d="M30.892 8.892L22.82 0.82C22.294 0.296 21.582 0 20.84 0H3.964C1.774 0 0 1.776 0 3.966V32.036C0 34.226 1.774 36 3.964 36H28.034C30.226 36 32 34.226 32 32.036V11.568C32 10.564 31.6 9.602 30.892 8.892Z" fill="#F5F5F5"/>
+<mask id="mask0_0_1116" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="36">
+<path id="Mask_2" d="M30.892 8.892L22.82 0.82C22.294 0.296 21.582 0 20.84 0H3.964C1.774 0 0 1.776 0 3.966V32.036C0 34.226 1.774 36 3.964 36H28.034C30.226 36 32 34.226 32 32.036V11.568C32 10.564 31.6 9.602 30.892 8.892Z" fill="#F5F5F5"/>
+</mask>
+<g mask="url(#mask0_0_1116)">
+<path id="Vector" d="M36.3429 -9H23.6571C22.7419 -9 22 -8.24386 22 -7.31111V8.31111C22 9.24386 22.7419 10 23.6571 10H36.3429C37.2581 10 38 9.24386 38 8.31111V-7.31111C38 -8.24386 37.2581 -9 36.3429 -9Z" fill="#E0E0E1"/>
+</g>
+</g>
+</svg>
