@@ -1,12 +1,16 @@
 "use client";
 
 import Image from "next/image";
+import { X } from "lucide-react";
 import type { DriveItem } from "@/lib/types";
 import { FileIcon } from "./FileIcon";
 
 interface RightSidePanelProps {
-  items: DriveItem[];
+  items?: DriveItem[];
   teamFolders?: boolean;
+  showActions?: boolean;
+  folderInfo?: { name: string; location: string };
+  onCloseFolderInfo?: () => void;
 }
 
 interface ActionItem {
@@ -118,7 +122,31 @@ const moreActions: ActionItem[] = [
   { label: "Delete", icon: "/figma/selection-icons/delete.svg", iconSize: { width: 14, height: 16 } },
 ];
 
-export function RightSidePanel({ items, teamFolders = false }: RightSidePanelProps) {
+export function RightSidePanel({ items = [], teamFolders = false, showActions = true, folderInfo, onCloseFolderInfo }: RightSidePanelProps) {
+  if (folderInfo) {
+    const isShared = folderInfo.location.includes("Team");
+    const previewItem = items[0];
+    const isMultiSelection = items.length > 1;
+    if (!previewItem) {
+      return <aside className="sticky top-0 hidden h-[calc(100dvh-60px)] w-[240px] shrink-0 self-start border-l border-[#F2F2F7] bg-white px-4 py-3 xl:flex xl:flex-col" aria-labelledby="folder-info-title">
+        <div className="flex items-center justify-between"><h2 id="folder-info-title" className="text-[16px] font-semibold leading-6 text-[#18181A]">Folder information</h2><button type="button" onClick={onCloseFolderInfo} className="flex size-8 items-center justify-center rounded-[6px] text-[#636366] hover:bg-[#F2F2F7] hover:text-[#18181A]" aria-label="Close folder information"><X size={18} strokeWidth={1.75} aria-hidden="true" /></button></div>
+        <div className="mt-5 flex min-h-[144px] items-center justify-center border-b border-[#E5E5EA] px-4"><p className="max-w-40 text-center text-[14px] leading-5 text-[#636366]">Select an item to see details</p></div>
+      </aside>;
+    }
+    return <aside className="sticky top-0 hidden h-[calc(100dvh-60px)] w-[240px] shrink-0 self-start overflow-y-auto border-l border-[#F2F2F7] bg-white px-4 py-3 xl:flex xl:flex-col" aria-labelledby="folder-info-title">
+      <div className="flex items-center justify-between"><h2 id="folder-info-title" className="text-[16px] font-semibold leading-6 text-[#18181A]">Folder information</h2><button type="button" onClick={onCloseFolderInfo} className="flex size-8 items-center justify-center rounded-[6px] text-[#636366] hover:bg-[#F2F2F7] hover:text-[#18181A]" aria-label="Close folder information"><X size={18} strokeWidth={1.75} aria-hidden="true" /></button></div>
+      <div className="flex flex-col items-center border-b border-[#E5E5EA] px-3 py-6 text-center">
+        <div className="relative flex h-[60px] w-[60px] items-center justify-center">
+          {isMultiSelection ? <><span className="absolute top-2 h-6 w-14 rounded-[6px] border border-[#E5E5EA] bg-white" /><span className="absolute bottom-1 h-6 w-14 rounded-[6px] border border-[#E5E5EA] bg-white" /></> : previewItem ? <FileIcon type={previewItem.type} size={40} shared={previewItem.shared} teamFolder={previewItem.type === "folder"} thumbnail={previewItem.thumbnail} /> : <FileIcon type="folder" size={40} teamFolder={isShared} />}
+        </div>
+        <p className="mt-2 w-full break-words text-[14px] font-semibold leading-5 text-[#18181A]">{isMultiSelection ? `${items.length} selected` : previewItem?.name ?? folderInfo.name}</p>
+        <p className="mt-1 text-[13px] leading-5 text-[#636366]">{isMultiSelection ? "Multiple items" : previewItem?.size ?? "Folder"}</p>
+      </div>
+      {!isMultiSelection && <><dl className="mt-7 grid gap-7"><div><dt className="text-[13px] leading-5 text-[#636366]">Folder name</dt><dd className="mt-1 text-[16px] leading-6 text-[#303039] break-words">{folderInfo.name}</dd></div><div><dt className="text-[13px] leading-5 text-[#636366]">Folder type</dt><dd className="mt-1 text-[16px] leading-6 text-[#303039]">{isShared ? "Shared folder" : "Personal folder"}</dd></div><div><dt className="text-[13px] leading-5 text-[#636366]">Owner</dt><dd className="mt-1 text-[16px] leading-6 text-[#303039]">Kiran Pingle</dd></div><div><dt className="text-[13px] leading-5 text-[#636366]">Created</dt><dd className="mt-1 text-[16px] leading-6 text-[#303039]">2025.02.26</dd></div></dl>
+      {isShared && <div className="mt-auto border-t border-[#E5E5EA] pt-5"><h3 className="text-[16px] font-semibold leading-6 text-[#18181A]">Shared with</h3><div className="mt-4 flex gap-2"><span className="flex size-10 items-center justify-center rounded-full bg-[#FFF7D7] text-[14px] font-semibold text-[#F7B500]">A</span><span className="flex size-10 items-center justify-center rounded-full bg-[#FFF0F6] text-[14px] font-semibold text-[#EE5C91]">K</span></div></div>}</>}
+    </aside>;
+  }
+
   const item = items[0];
   const isMultiSelection = items.length > 1;
   const visibleActions = isMultiSelection
@@ -159,6 +187,7 @@ export function RightSidePanel({ items, teamFolders = false }: RightSidePanelPro
           </div>
         </div>
 
+        {showActions && <>
         {/* Download button */}
         <button
           type="button"
@@ -203,6 +232,7 @@ export function RightSidePanel({ items, teamFolders = false }: RightSidePanelPro
             </button>
           ))}
         </div>
+        </>}
       </div>
     </aside>
   );

@@ -12,6 +12,7 @@ interface FilterBarProps {
   onItemsChange: (items: DriveItem[]) => void;
   onViewModeChange: (mode: ViewMode) => void;
   hideFilters?: boolean;
+  endAdornment?: React.ReactNode;
 }
 
 type Menu = "type" | "people" | "modified" | null;
@@ -41,7 +42,7 @@ function matchesModified(item: DriveItem, filter: DateFilter, from: string, to: 
   return date.getFullYear() === 2025;
 }
 
-export function FilterBar({ items, viewMode, onItemsChange, onViewModeChange, hideFilters = false }: FilterBarProps) {
+export function FilterBar({ items, viewMode, onItemsChange, onViewModeChange, hideFilters = false, endAdornment }: FilterBarProps) {
   const [openMenu, setOpenMenu] = useState<Menu>(null);
   const [selectedTypes, setSelectedTypes] = useState<Set<FileType>>(new Set());
   const [selectedPeople, setSelectedPeople] = useState<Set<string>>(new Set());
@@ -89,7 +90,7 @@ export function FilterBar({ items, viewMode, onItemsChange, onViewModeChange, hi
         {hasActiveFilters && <button type="button" onClick={() => { clearAll(); setOpenMenu(null); }} className="h-8 px-2 text-[14px] font-medium text-[#18181A] hover:text-[#002896]">Clear all</button>}
       </div>
     )}
-    <div className="flex items-center rounded-[12px] bg-[#F2F2F7] p-1" aria-label="View mode"><button type="button" onClick={() => onViewModeChange("list")} className={`flex size-8 items-center justify-center rounded-[8px] ${viewMode === "list" ? "bg-white text-[#002896] shadow-sm" : "text-[#636366]"}`} aria-label="List view" aria-pressed={viewMode === "list"}><ListIcon size={16} /></button><button type="button" onClick={() => onViewModeChange("grid")} className={`flex size-8 items-center justify-center rounded-[8px] ${viewMode === "grid" ? "bg-white text-[#002896] shadow-sm" : "text-[#636366]"}`} aria-label="Grid view" aria-pressed={viewMode === "grid"}><GridIcon size={16} /></button></div>
+    <div className="flex items-center gap-2"><div className="flex items-center rounded-[12px] bg-[#F2F2F7] p-1" aria-label="View mode"><button type="button" onClick={() => onViewModeChange("list")} className={`flex size-8 items-center justify-center rounded-[8px] ${viewMode === "list" ? "bg-white text-[#002896] shadow-sm" : "text-[#636366]"}`} aria-label="List view" aria-pressed={viewMode === "list"}><ListIcon size={16} /></button><button type="button" onClick={() => onViewModeChange("grid")} className={`flex size-8 items-center justify-center rounded-[8px] ${viewMode === "grid" ? "bg-white text-[#002896] shadow-sm" : "text-[#636366]"}`} aria-label="Grid view" aria-pressed={viewMode === "grid"}><GridIcon size={16} /></button></div>{endAdornment}</div>
   </div>;
 }
 

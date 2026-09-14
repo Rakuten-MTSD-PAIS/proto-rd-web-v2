@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Copy, Download, FolderInput, MoreVertical, Pencil, Share2, Star, Trash2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MoreActionsMenuProps {
   itemName: string;
@@ -41,7 +42,7 @@ export function MoreActionsMenu({ itemName, isFolder = false }: MoreActionsMenuP
 
   return (
     <div ref={menuRef} className="relative">
-      <button
+      <Tooltip><TooltipTrigger
         type="button"
         className={`flex size-8 items-center justify-center rounded-[6px] text-[#636366] transition-[background-color,transform] duration-150 ease-out hover:bg-[#E5E5EA] hover:text-[#18181A] active:scale-[0.96] motion-reduce:transition-none ${open ? "bg-[#E5E5EA] text-[#18181A]" : ""}`}
         aria-label={`More actions for ${itemName}`}
@@ -53,7 +54,7 @@ export function MoreActionsMenu({ itemName, isFolder = false }: MoreActionsMenuP
         }}
       >
         <MoreVertical size={18} strokeWidth={1.75} aria-hidden="true" />
-      </button>
+      </TooltipTrigger><TooltipContent>More actions</TooltipContent></Tooltip>
       {open && (
         <div className="absolute right-0 top-[calc(100%+6px)] z-40 w-[220px] overflow-hidden rounded-[8px] border border-[#E1E1E6] bg-white py-1 shadow-[0_8px_24px_rgba(24,24,26,0.14)]" role="menu" aria-label={`Actions for ${itemName}`}>
           {actions.filter((action) => !isFolder || action.label !== "Download").map(({ label, icon: Icon }) => (
