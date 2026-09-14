@@ -51,7 +51,7 @@ export const recentFileGroups: { group: string; items: DriveItem[] }[] = [
   {
     group: "Today",
     items: withMinimumItems([
-      { id: "r1",  name: "Ouch_both_beyond.pptx",           type: "ppt",   modified: "Sep 14, 2026, 9:42 AM",  size: "18.4 MB",  ...ME,          location: "My Drive" },
+      { id: "r1",  name: "Ouch_both_beyond.pptx — Final Presentation for the Global Product Strategy Review", type: "ppt", modified: "Sep 14, 2026, 9:42 AM", size: "18.4 MB", ...ME, location: "My Drive" },
       { id: "r2",  name: "Report Q2-2025.xlsx",             type: "excel", modified: "Sep 14, 2026, 8:15 AM",  size: "3.2 MB",   ...person(0),   location: "Team Drive" },
       { id: "r3",  name: "Annual Report.docx",              type: "word",  modified: "Sep 14, 2026, 7:58 AM",  size: "5.6 MB",   ...ME,          location: "My Drive" },
       { id: "r4",  name: "Brand Guidelines v3.pdf",         type: "pdf",   modified: "Sep 14, 2026, 7:30 AM",  size: "12.1 MB",  ...person(1),   location: "Team Drive" },
@@ -84,14 +84,14 @@ export const recentFileGroups: { group: string; items: DriveItem[] }[] = [
 export const recentItems: DriveItem[] = recentFileGroups.flatMap((g) => g.items);
 
 export const myDriveItems: DriveItem[] = withMinimumItems([
-  { id: "d1",  name: "Meeting Notes",              type: "folder", modified: "Sep 12, 2026, 11:20 AM", size: "–",        ...ME, location: "My Drive" },
+  { id: "d1",  name: "Claude skills: Mariam Vossough @ The Women's AI Voice — Workshop Notes, Research, and Campaign Assets", type: "folder", modified: "Sep 12, 2026, 11:20 AM", size: "–", ...ME, location: "My Drive", shared: true, starred: true },
   { id: "d2",  name: "My Documents",               type: "folder", modified: "Sep 10, 2026, 9:05 AM",  size: "–",        ...ME, location: "My Drive" },
-  { id: "d3",  name: "Webinar 2025",               type: "folder", modified: "Aug 28, 2026, 2:44 PM",  size: "–",        ...ME, location: "My Drive" },
+  { id: "d3",  name: "Webinar 2025",               type: "folder", modified: "Aug 28, 2026, 2:44 PM",  size: "–",        ...ME, location: "My Drive", shared: true },
   { id: "d4",  name: "Ouch_both_beyond.pptx",      type: "ppt",    modified: "Sep 14, 2026, 9:42 AM",  size: "18.4 MB",  ...ME, location: "My Drive" },
-  { id: "d5",  name: "Annual Report.docx",          type: "word",   modified: "Sep 14, 2026, 7:58 AM",  size: "5.6 MB",   ...ME, location: "My Drive" },
+  { id: "d5",  name: "Annual Report.docx",          type: "word",   modified: "Sep 14, 2026, 7:58 AM",  size: "5.6 MB",   ...ME, location: "My Drive", starred: true },
   { id: "d6",  name: "Budget_Forecast_2026.xlsx",   type: "excel",  modified: "Sep 9, 2026, 3:15 PM",   size: "2.1 MB",   ...ME, location: "My Drive" },
   { id: "d7",  name: "viability_assessment.pdf",    type: "pdf",    modified: "Sep 8, 2026, 1:30 PM",   size: "4.5 MB",   ...ME, location: "My Drive" },
-  { id: "d8",  name: "Campaign_Banner_v2.png",      type: "image",  modified: "Sep 7, 2026, 11:00 AM",  size: "1.8 MB",   ...ME, thumbnail: "/media-thumbnails/campaign-banner.svg", location: "My Drive" },
+  { id: "d8",  name: "Campaign_Banner_v2.png",      type: "image",  modified: "Sep 7, 2026, 11:00 AM",  size: "1.8 MB",   ...ME, thumbnail: "/media-thumbnails/campaign-banner.svg", location: "My Drive", shared: true },
   { id: "d9",  name: "Architecture_Notes.docx",     type: "word",   modified: "Sep 7, 2026, 9:45 AM",   size: "890 KB",   ...ME, location: "My Drive" },
   { id: "d10", name: "Podcast_Interview_Aug.mp3",   type: "audio",  modified: "Aug 28, 2026, 4:00 PM",  size: "64 MB",    ...ME, location: "My Drive" },
   { id: "d11", name: "Project_Atlas_Assets.zip",    type: "zip",    modified: "Aug 15, 2026, 10:30 AM", size: "156 MB",   ...ME, location: "My Drive" },
@@ -101,7 +101,7 @@ export const myDriveItems: DriveItem[] = withMinimumItems([
 ], 25, "my-drive");
 
 export const sharedItems: DriveItem[] = withMinimumItems([
-  { id: "s1",  name: "Campaign Assets",            type: "folder", modified: "Sep 9, 2026",  size: "–",       owner: "Yuki Sato",     ownerInitials: "YS", ownerColor: "#9B3FD4", ownerAvatar: "/avatars/yuki-sato.svg",     location: "Team Drive", shared: true },
+  { id: "s1",  name: "Campaign Assets — Japan Autumn Launch Photography, Video, and Social Media Toolkit", type: "folder", modified: "Sep 9, 2026", size: "–", owner: "Yuki Sato", ownerInitials: "YS", ownerColor: "#9B3FD4", ownerAvatar: "/avatars/yuki-sato.svg", location: "Team Drive", shared: true },
   { id: "s2",  name: "Design Resources",           type: "folder", modified: "Sep 6, 2026",  size: "–",       owner: "Kenji Tanaka",  ownerInitials: "KT", ownerColor: "#0080B0", ownerAvatar: "/avatars/kenji-tanaka.svg",  location: "Team Drive", shared: true },
   { id: "s3",  name: "Marketing Q3",               type: "folder", modified: "Aug 28, 2026", size: "–",       owner: "Aisha Patel",   ownerInitials: "AP", ownerColor: "#C14020", ownerAvatar: "/avatars/aisha-patel.svg",   location: "Marketing",  shared: true },
   { id: "s4",  name: "Product Launch Deck.pptx",   type: "ppt",    modified: "Sep 10, 2026", size: "8.1 MB",  owner: "Yuki Sato",     ownerInitials: "YS", ownerColor: "#9B3FD4", ownerAvatar: "/avatars/yuki-sato.svg",     location: "Team Drive", shared: true },
@@ -116,7 +116,7 @@ export const sharedItems: DriveItem[] = withMinimumItems([
 ], 25, "shared");
 
 export const starredItems: DriveItem[] = withMinimumItems([
-  { id: "st1", name: "Q3 Report.pdf",              type: "pdf",    modified: "Sep 14, 2026, 10:30 AM", size: "2.4 MB",  ...ME,         location: "My Drive", starred: true },
+  { id: "st1", name: "Q3 Report — International Growth and Customer Experience Performance Review.pdf", type: "pdf", modified: "Sep 14, 2026, 10:30 AM", size: "2.4 MB", ...ME, location: "My Drive", starred: true },
   { id: "st2", name: "Meeting Notes",              type: "folder", modified: "Sep 12, 2026, 11:20 AM", size: "–",       ...ME,         location: "My Drive", starred: true },
   { id: "st3", name: "Budget_2026.xlsx",           type: "excel",  modified: "Sep 8, 2026",            size: "512 KB",  ...ME,         location: "My Drive", starred: true },
   { id: "st4", name: "Brand Guidelines.pdf",       type: "pdf",    modified: "Aug 30, 2026",           size: "5.8 MB",  ...person(0),  location: "Team Drive", starred: true },
@@ -124,7 +124,7 @@ export const starredItems: DriveItem[] = withMinimumItems([
 ], 25, "starred");
 
 const teamFolderNames = [
-  "Team Design", "Dev Team Folder", "Q4 Goals 2026", "Team Party-2025", "Annual Workshop-2026",
+  "Team Design — Design System, Research, and Cross-functional Planning Materials", "Dev Team Folder", "Q4 Goals 2026", "Team Party-2025", "Annual Workshop-2026",
   "Product Launch-2026", "Quarterly Review-Q3", "Marketing Meet-Sep", "Q3 Marketing Strategy",
   "Brand Guidelines v2.0", "Product Launch Deck", "Annual Report 2025", "UX Research Findings",
   "Sales Dashboard Redesign", "Design System Library", "Customer Insights Q3", "Engineering Roadmap",

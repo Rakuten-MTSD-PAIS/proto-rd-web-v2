@@ -7,16 +7,17 @@ interface FileIconProps {
   type: FileType;
   size?: number;
   shared?: boolean;
+  teamFolder?: boolean;
   thumbnail?: string;
 }
 
-export function FileIcon({ type, size = 32, shared = false, thumbnail }: FileIconProps) {
+export function FileIcon({ type, size = 32, shared = false, teamFolder = false, thumbnail }: FileIconProps) {
   if (thumbnail && (type === "image" || type === "video")) {
     return <span className="relative block shrink-0 overflow-hidden rounded-[4px] border border-[#E5E5EA]" style={{ width: size, height: size }}><Image src={thumbnail} alt="" width={size} height={size} unoptimized className="size-full object-cover" />{type === "video" && <span className="absolute inset-0 grid place-items-center bg-black/20"><span className="ml-0.5 size-0 border-y-[5px] border-l-[8px] border-y-transparent border-l-white drop-shadow-sm" /></span>}</span>;
   }
 
   const iconSource: Record<FileType, string> = {
-    folder: shared ? "/file-icons/folder-share.svg" : "/file-icons/folder.svg",
+    folder: teamFolder ? "/file-icons/folder-team.svg" : shared ? "/file-icons/folder-share.svg" : "/file-icons/folder.svg",
     pdf: "/file-icons/file-pdf.svg",
     image: "/file-icons/file-jpg.svg",
     zip: "/file-icons/file-zip.svg",

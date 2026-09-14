@@ -3,34 +3,39 @@
 import { useState } from "react";
 import { PageToolbar } from "@/components/drive/PageToolbar";
 import { FilterBar } from "@/components/drive/FilterBar";
-import { FolderCards } from "@/components/drive/FolderCards";
 import { FileTable } from "@/components/drive/FileTable";
+import { RightSidePanel } from "@/components/drive/RightSidePanel";
 import { starredItems } from "@/lib/mock-data";
-import type { ViewMode } from "@/lib/types";
+import type { DriveItem, ViewMode } from "@/lib/types";
 
 export default function StarredPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [filteredItems, setFilteredItems] = useState(starredItems);
-
-  const folders = filteredItems.filter((i) => i.type === "folder");
-  const files = filteredItems.filter((i) => i.type !== "folder");
+  const [selectedItems, setSelectedItems] = useState<DriveItem[]>([]);
 
   return (
-    <div className="flex flex-col gap-5 p-6">
-      <PageToolbar breadcrumbs={[{ label: "Starred" }]} showActions={false} />
-      <FilterBar items={starredItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={setViewMode} />
-      {folders.length > 0 && (
-        <section>
-          <p className="text-[12px] text-[#636366] font-semibold uppercase tracking-wide mb-3">Folders</p>
-          <FolderCards folders={folders} />
-        </section>
-      )}
-      {files.length > 0 && (
-        <section>
-          <p className="text-[12px] text-[#636366] font-semibold uppercase tracking-wide mb-3">Files</p>
-          <FileTable items={files} showOwner showLocation />
-        </section>
-      )}
+    <div className="flex min-h-full flex-col">
+      <div className="px-4 pb-4 pt-5 sm:px-6">
+        <PageToolbar breadcrumbs={[{ label: "Starred" }]} showActions={false} />
+      </div>
+      <div className="sticky top-0 z-20 border-b border-[#E5E5EA] bg-white px-4 pb-4 sm:px-6">
+        {selectedItems.length > 0 ? (
+          <div className="flex h-10 items-center gap-3">
+            <button type="button" onClick={() => setSelectedItems([])} className="inline-flex h-8 items-center rounded-[8px] border border-[#E5E5EA] px-4 text-[14px] text-[#18181A] hover:bg-[#F9F9FB]">
+              ×&nbsp; Cancel
+            </button>
+            <span className="text-[14px] text-[#18181A]">{selectedItems.length} {selectedItems.length === 1 ? "Item" : "Items"} Selected</span>
+          </div>
+        ) : (
+          <FilterBar items={starredItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={setViewMode} />
+        )}
+      </div>
+      <section className="flex min-w-0 flex-1">
+        <div className="min-w-0 flex-1">
+          <FileTable items={filteredItems} selectedItemIds={selectedItems.map((item) => item.id)} onSelectedItemsChange={setSelectedItems} />
+        </div>
+        {selectedItems.length > 0 && <RightSidePanel items={selectedItems} />}
+      </section>
     </div>
   );
 }

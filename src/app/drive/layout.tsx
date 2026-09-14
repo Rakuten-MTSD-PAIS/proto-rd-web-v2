@@ -24,7 +24,7 @@ export default function DriveLayout({ children }: { children: React.ReactNode })
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
       />
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header onMenuClick={() => setMobileOpen(true)} />
         <main className="mt-0 flex-1 overflow-y-auto rounded-tl-[12px] rounded-tr-[12px] bg-white sm:rounded-tl-[16px] sm:rounded-tr-[16px]">
           {children}

@@ -1,0 +1,9 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="16" height="14" viewBox="0 0 16 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="icons/upload-outline">
+<g id="upload-outline">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M10.2859 8.96006H5.71447V4.48003H3.42876L7.58533 0.180881C7.6979 0.0599204 7.85219 0 8.0059 0C8.16019 0 8.31447 0.0604804 8.42761 0.182001L12.5716 4.48003H10.2859V8.96006ZM9.9196 3.36003L8.00531 1.37481L6.08588 3.36003H6.85731V7.84005H9.14303V3.36003H9.9196Z" fill="#18181A"/>
+<path d="M14.8571 10.08V12.88H1.14286V10.08H0V12.88C0 13.496 0.514286 14 1.14286 14H14.8571C15.4857 14 16 13.496 16 12.88V10.08H14.8571Z" fill="#18181A"/>
+<path d="M5.71429 11.2H10.2857V10.08H5.71429V11.2Z" fill="#18181A"/>
+</g>
+</g>
+</svg>

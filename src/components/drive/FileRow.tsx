@@ -13,6 +13,8 @@ interface FileRowProps {
   showLocation?: boolean;
   teamFolders?: boolean;
   ownerFirst?: boolean;
+  compact?: boolean;
+  showCheckbox?: boolean;
   selected?: boolean;
   onSelect?: () => void;
 }
@@ -44,16 +46,27 @@ function OwnerAvatar({ item }: { item: DriveItem }) {
   );
 }
 
-export function FileRow({ item, showOwner = false, showLocation = false, teamFolders = false, ownerFirst = false, selected = false, onSelect }: FileRowProps) {
+function SharedPeopleIcon() {
   return (
-    <tr onClick={onSelect} aria-selected={selected} className={`group cursor-pointer border-b border-[#E5E5EA] transition-colors duration-150 ease-out hover:bg-[#F9F9FB] motion-reduce:transition-none ${selected ? "bg-[#E9EEF6] hover:bg-[#E9EEF6]" : ""}`} style={{ height: 64, fontFamily: "'Rakuten Sans UI', sans-serif" }}>
+    <svg width="16" height="16" viewBox="0 0 20 12" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-4 shrink-0 text-[#636366]" role="img" aria-label="Shared">
+      <path d="M4.99934 6.8579C6.84029 6.8579 8.33268 5.32271 8.33268 3.42895C8.33268 1.53519 6.84029 0 4.99934 0C3.15839 0 1.66601 1.53519 1.66601 3.42895C1.66601 5.32271 3.15839 6.8579 4.99934 6.8579Z" fill="currentColor" />
+      <path d="M14.9993 6.85836C16.8403 6.85836 18.3327 5.32317 18.3327 3.42941C18.3327 1.53565 16.8403 0.000460619 14.9993 0.000460619C13.1584 0.000460619 11.666 1.53565 11.666 3.42941C11.666 5.32317 13.1584 6.85836 14.9993 6.85836Z" fill="currentColor" />
+      <path d="M15 6.85658C17.7614 6.85658 20 9.15937 20 12H10C10 9.15937 12.2386 6.85658 15 6.85658Z" fill="currentColor" />
+      <path d="M5 6.85658C7.76142 6.85658 10 9.15937 10 12H0C0 9.15937 2.23858 6.85658 5 6.85658Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function FileRow({ item, showOwner = false, showLocation = false, teamFolders = false, ownerFirst = false, compact = false, showCheckbox = false, selected = false, onSelect }: FileRowProps) {
+  return (
+    <tr aria-selected={selected} className={`group border-b border-[#E5E5EA] transition-colors duration-150 ease-out hover:bg-[#F9F9FB] motion-reduce:transition-none ${selected ? "bg-[#E9EEF6] hover:bg-[#E9EEF6]" : ""}`} style={{ height: 64, fontFamily: "'Rakuten Sans UI', sans-serif" }}>
       {/* Checkbox — hidden, shown on hover */}
       <td className="pl-3 pr-0 w-9">
         <Checkbox
           checked={selected}
           onCheckedChange={onSelect}
           onClick={(event) => event.stopPropagation()}
-          className={`cursor-pointer border-[#C7C7CC] transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none ${selected ? "opacity-100" : "opacity-0"}`}
+          className={`cursor-pointer border-[#C7C7CC] transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none ${selected || showCheckbox ? "opacity-100" : "opacity-0"}`}
           aria-label={`Select ${item.name}`}
         />
       </td>
@@ -61,38 +74,40 @@ export function FileRow({ item, showOwner = false, showLocation = false, teamFol
       {/* Name */}
       <td className="py-2 pl-2 pr-4">
         <div className="flex items-center gap-3">
-          <FileIcon type={item.type} size={32} shared={teamFolders && item.type === "folder"} thumbnail={item.thumbnail} />
-          <span className="text-[16px] leading-[24px] text-[#18181A] truncate max-w-[400px]">{item.name}</span>
+          <FileIcon type={item.type} size={32} shared={item.shared && item.type === "folder"} teamFolder={teamFolders && item.type === "folder"} thumbnail={item.thumbnail} />
+          <span className="min-w-0 flex-1 truncate text-[16px] leading-[24px] text-[#18181A]" title={item.name}>{item.name}</span>
+          {item.shared && <SharedPeopleIcon />}
+          {item.starred && <Star size={16} strokeWidth={1.75} fill="currentColor" className="size-4 shrink-0 text-[#636366]" aria-label="Starred" />}
         </div>
       </td>
 
       {/* Owner */}
       {showOwner && ownerFirst && (
-        <td className="py-2 px-4 w-[150px]">
+        <td className={`w-[150px] px-4 py-2 ${compact ? "hidden lg:table-cell" : ""}`}>
           <OwnerAvatar item={item} />
         </td>
       )}
 
       {/* Modified */}
-      <td className="w-[160px] whitespace-nowrap px-4 py-2 text-[14px] leading-[20px] text-[#636366]">{item.modified}</td>
+      <td className="w-[176px] whitespace-nowrap px-4 py-2 text-[14px] leading-[20px] text-[#636366]">{item.modified}</td>
 
       {/* Size */}
-      <td className="w-[130px] px-4 py-2 text-[14px] leading-[20px] text-[#636366]">{item.size}</td>
+      <td className={`w-[120px] whitespace-nowrap px-4 py-2 text-[14px] leading-[20px] text-[#636366] ${compact ? "hidden lg:table-cell" : ""}`}>{item.size}</td>
 
       {showOwner && !ownerFirst && (
-        <td className="py-2 px-4 w-[150px]">
+        <td className={`w-[160px] px-4 py-2 ${compact ? "hidden lg:table-cell" : ""}`}>
           <OwnerAvatar item={item} />
         </td>
       )}
 
       {/* Location stays in place while row actions appear at the far edge. */}
       {showLocation && (
-        <td className="py-2 px-4 text-[13px] text-[#636366]">
+        <td className={`w-[180px] truncate px-4 py-2 text-[13px] text-[#636366] ${compact ? "hidden lg:table-cell" : ""}`} title={item.location}>
           {item.location}
         </td>
       )}
 
-      <td className="w-[152px] py-2 pr-3">
+      <td className={`w-[152px] py-2 pr-3 ${compact ? "hidden sm:table-cell" : ""}`}>
         <div onClick={(event) => event.stopPropagation()} className="pointer-events-none flex translate-x-1 items-center justify-end gap-1 opacity-0 transition-[opacity,transform] duration-150 [transition-timing-function:cubic-bezier(0.2,0,0,1)] group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-x-0 group-focus-within:opacity-100 motion-reduce:transition-none">
           <button className="flex size-8 items-center justify-center rounded-[6px] text-[#636366] transition-[background-color,transform] duration-150 ease-out hover:bg-[#E5E5EA] hover:text-[#18181A] active:scale-[0.96] motion-reduce:transition-none" aria-label={`Download ${item.name}`}>
             <Download size={17} strokeWidth={1.75} aria-hidden="true" />

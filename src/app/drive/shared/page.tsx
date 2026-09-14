@@ -18,7 +18,9 @@ export default function SharedPage() {
   return (
     <div className="flex flex-col gap-5 p-6">
       <PageToolbar breadcrumbs={[{ label: "Shared with Me" }]} showActions={false} />
-      <FilterBar items={sharedItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={setViewMode} />
+      <div className="sticky top-0 z-20 -mx-6 bg-white px-6 py-2">
+        <FilterBar items={sharedItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={setViewMode} />
+      </div>
       {folders.length > 0 && (
         <section>
           <p className="text-[12px] text-[#636366] font-semibold uppercase tracking-wide mb-3">Folders</p>

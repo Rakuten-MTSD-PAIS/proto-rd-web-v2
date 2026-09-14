@@ -30,7 +30,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   }, []);
 
   return (
-    <header className="flex items-center h-[60px] px-3 gap-3 bg-[#F2F2F7] shrink-0 sm:gap-4" style={{ paddingTop: 4, paddingBottom: 0 }}>
+    <header className="sticky top-0 z-30 flex h-[60px] shrink-0 items-center gap-3 bg-[#F2F2F7] sm:gap-4">
       <button
         type="button"
         onClick={onMenuClick}

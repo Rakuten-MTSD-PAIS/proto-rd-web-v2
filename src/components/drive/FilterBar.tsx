@@ -11,6 +11,7 @@ interface FilterBarProps {
   viewMode: ViewMode;
   onItemsChange: (items: DriveItem[]) => void;
   onViewModeChange: (mode: ViewMode) => void;
+  hideFilters?: boolean;
 }
 
 type Menu = "type" | "people" | "modified" | null;
@@ -40,7 +41,7 @@ function matchesModified(item: DriveItem, filter: DateFilter, from: string, to: 
   return date.getFullYear() === 2025;
 }
 
-export function FilterBar({ items, viewMode, onItemsChange, onViewModeChange }: FilterBarProps) {
+export function FilterBar({ items, viewMode, onItemsChange, onViewModeChange, hideFilters = false }: FilterBarProps) {
   const [openMenu, setOpenMenu] = useState<Menu>(null);
   const [selectedTypes, setSelectedTypes] = useState<Set<FileType>>(new Set());
   const [selectedPeople, setSelectedPeople] = useState<Set<string>>(new Set());
@@ -74,18 +75,20 @@ export function FilterBar({ items, viewMode, onItemsChange, onViewModeChange }: 
   const hasActiveFilters = selectedTypes.size > 0 || selectedPeople.size > 0 || Boolean(modified);
 
   return <div ref={filterRef} className="relative flex flex-wrap items-center justify-between gap-3">
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="relative"><FilterButton label="Type" active={active("type")} count={selectedTypes.size} open={openMenu === "type"} onClick={() => setOpenMenu(openMenu === "type" ? null : "type")} />
-        {openMenu === "type" && <TypeMenu types={availableTypes} selected={selectedTypes} onToggle={(type) => toggleSet(type, setSelectedTypes)} />}
+    {!hideFilters && (
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative"><FilterButton label="Type" active={active("type")} count={selectedTypes.size} open={openMenu === "type"} onClick={() => setOpenMenu(openMenu === "type" ? null : "type")} />
+          {openMenu === "type" && <TypeMenu types={availableTypes} selected={selectedTypes} onToggle={(type) => toggleSet(type, setSelectedTypes)} />}
+        </div>
+        <div className="relative"><FilterButton label="People" active={active("people")} count={selectedPeople.size} open={openMenu === "people"} onClick={() => setOpenMenu(openMenu === "people" ? null : "people")} />
+          {openMenu === "people" && <PeopleMenu people={people} selected={selectedPeople} onToggle={(person) => toggleSet(person, setSelectedPeople)} />}
+        </div>
+        <div className="relative"><FilterButton label="Modified" active={active("modified")} open={openMenu === "modified"} onClick={openModified} />
+          {openMenu === "modified" && <ModifiedMenu draft={draftModified} customOpen={customOpen} from={fromDate} to={toDate} onDraftChange={(value) => { setDraftModified(value); setCustomOpen(false); }} onCustomOpen={() => { setDraftModified("custom"); setCustomOpen(true); }} onFromChange={setFromDate} onToChange={setToDate} onCancel={() => setOpenMenu(null)} onClear={() => { clearAll(); setOpenMenu(null); }} onApply={() => { setModified(draftModified); setOpenMenu(null); }} />}
+        </div>
+        {hasActiveFilters && <button type="button" onClick={() => { clearAll(); setOpenMenu(null); }} className="h-8 px-2 text-[14px] font-medium text-[#18181A] hover:text-[#002896]">Clear all</button>}
       </div>
-      <div className="relative"><FilterButton label="People" active={active("people")} count={selectedPeople.size} open={openMenu === "people"} onClick={() => setOpenMenu(openMenu === "people" ? null : "people")} />
-        {openMenu === "people" && <PeopleMenu people={people} selected={selectedPeople} onToggle={(person) => toggleSet(person, setSelectedPeople)} />}
-      </div>
-      <div className="relative"><FilterButton label="Modified" active={active("modified")} open={openMenu === "modified"} onClick={openModified} />
-        {openMenu === "modified" && <ModifiedMenu draft={draftModified} customOpen={customOpen} from={fromDate} to={toDate} onDraftChange={(value) => { setDraftModified(value); setCustomOpen(false); }} onCustomOpen={() => { setDraftModified("custom"); setCustomOpen(true); }} onFromChange={setFromDate} onToChange={setToDate} onCancel={() => setOpenMenu(null)} onClear={() => { clearAll(); setOpenMenu(null); }} onApply={() => { setModified(draftModified); setOpenMenu(null); }} />}
-      </div>
-      {hasActiveFilters && <button type="button" onClick={() => { clearAll(); setOpenMenu(null); }} className="h-8 px-2 text-[14px] font-medium text-[#18181A] hover:text-[#002896]">Clear all</button>}
-    </div>
+    )}
     <div className="flex items-center rounded-[12px] bg-[#F2F2F7] p-1" aria-label="View mode"><button type="button" onClick={() => onViewModeChange("list")} className={`flex size-8 items-center justify-center rounded-[8px] ${viewMode === "list" ? "bg-white text-[#002896] shadow-sm" : "text-[#636366]"}`} aria-label="List view" aria-pressed={viewMode === "list"}><ListIcon size={16} /></button><button type="button" onClick={() => onViewModeChange("grid")} className={`flex size-8 items-center justify-center rounded-[8px] ${viewMode === "grid" ? "bg-white text-[#002896] shadow-sm" : "text-[#636366]"}`} aria-label="Grid view" aria-pressed={viewMode === "grid"}><GridIcon size={16} /></button></div>
   </div>;
 }
@@ -112,5 +115,5 @@ function PersonAvatar({ person, index }: { person: string; index: number }) {
   const initials = person.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
   return <span className="flex size-9 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white" style={{ backgroundColor: colors[index % colors.length] }}>{initials}</span>;
 }
-function ModifiedMenu({ draft, customOpen, from, to, onDraftChange, onCustomOpen, onFromChange, onToChange, onCancel, onClear, onApply }: { draft: DateFilter; customOpen: boolean; from: string; to: string; onDraftChange: (value: DateFilter) => void; onCustomOpen: () => void; onFromChange: (value: string) => void; onToChange: (value: string) => void; onCancel: () => void; onClear: () => void; onApply: () => void }) { return <MenuSurface className="w-[438px]"><div className="flex"><div className="w-[220px] py-2">{DATE_OPTIONS.map((option) => <button key={option.value} type="button" onClick={() => onDraftChange(option.value)} className={`w-full px-4 py-3 text-left text-[16px] ${draft === option.value ? "bg-[#F0F2FF] font-semibold text-[#002896]" : "text-[#18181A] hover:bg-[#F6F7FC]"}`}>{option.label}</button>)}<button type="button" onClick={onCustomOpen} className={`flex w-full items-center justify-between px-4 py-3 text-left text-[16px] ${customOpen ? "bg-[#F0F2FF] font-semibold text-[#002896]" : "text-[#18181A] hover:bg-[#F6F7FC]"}`}>Custom date range <span className="text-[28px] leading-4">›</span></button></div>{customOpen && <div className="w-[218px] border-l border-[#E5E5EA] p-4"><p className="mb-4 text-[14px] text-[#636366]">Custom date range</p><DateInput label="From" value={from} onChange={onFromChange} /><DateInput label="To" value={to} onChange={onToChange} /></div>}</div><div className="flex items-center justify-end gap-4 border-t border-[#E5E5EA] px-4 py-3"><button type="button" onClick={onClear} className="text-[14px] text-[#8E8E93]">Clear all</button><button type="button" onClick={onCancel} className="text-[14px] text-[#002896]">Cancel</button><button type="button" onClick={onApply} className="rounded-[8px] bg-[#002896] px-4 py-2 text-[14px] font-semibold text-white">Apply</button></div></MenuSurface>; }
+function ModifiedMenu({ draft, customOpen, from, to, onDraftChange, onCustomOpen, onFromChange, onToChange, onCancel, onClear, onApply }: { draft: DateFilter; customOpen: boolean; from: string; to: string; onDraftChange: (value: DateFilter) => void; onCustomOpen: () => void; onFromChange: (value: string) => void; onToChange: (value: string) => void; onCancel: () => void; onClear: () => void; onApply: () => void }) { return <MenuSurface className="w-[438px]"><div className="flex"><div className="w-[220px] py-2">{DATE_OPTIONS.map((option) => <button key={option.value} type="button" onClick={() => onDraftChange(option.value)} className={`w-full px-4 py-3 text-left text-[16px] ${draft === option.value ? "bg-[#F0F2FF] font-semibold text-[#002896]" : "text-[#18181A] hover:bg-[#F6F7FC]"}`}>{option.label}</button>)}<button type="button" onClick={onCustomOpen} className={`flex w-full items-center justify-between px-4 py-3 text-left text-[16px] ${customOpen ? "bg-[#F0F2FF] font-semibold text-[#002896]" : "text-[#18181A] hover:bg-[#F6F7FC]"}`}>Custom date range <span className="text-[28px] leading-4">›</span></button></div>{customOpen && <div className="w-[218px] border-l border-[#E5E5EA] p-4"><p className="mb-4 text-[14px] text-[#636366]">Custom date range</p><DateInput label="From" value={from} onChange={onFromChange} /><DateInput label="To" value={to} onChange={onToChange} /></div>}</div><div className="flex items-center justify-end gap-4 border-t border-[#E5E5EA] px-4 py-3"><button type="button" onClick={onClear} className="text-[14px] text-[#636366] hover:text-[#18181A]">Clear all</button><button type="button" onClick={onCancel} className="text-[14px] text-[#002896]">Cancel</button><button type="button" onClick={onApply} className="rounded-[8px] bg-[#002896] px-4 py-2 text-[14px] font-semibold text-white">Apply</button></div></MenuSurface>; }
 function DateInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) { return <label className="mb-3 block text-[14px] text-[#636366]">{label}<input type="date" value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 block h-10 w-full appearance-none rounded-[8px] border border-[#E1E1E6] px-3 text-[14px] text-[#18181A] outline-none focus:border-[#002896] focus:ring-1 focus:ring-[#002896]" /></label>; }

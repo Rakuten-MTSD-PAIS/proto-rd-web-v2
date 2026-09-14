@@ -441,4 +441,13 @@ export const RDIcons = {
   FileAudioIcon,
   FileZipIcon,
   FolderFillIcon,
+  StarFilledIcon,
 };
+
+export function StarFilledIcon({ size = 20, className, ...props }: { size?: number; className?: string } & SVGProps<SVGSVGElement>) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} {...props}>
+      <path fillRule="evenodd" clipRule="evenodd" d="M19.2705 6.96135L13.3105 6.14294L10.7683 0.497858C10.4698 -0.165953 9.53061 -0.165953 9.23138 0.497858L6.69065 6.14294L0.729206 6.96135C0.038448 7.05596 -0.245394 7.90515 0.249214 8.39897L4.64453 12.7857L3.54301 19.003C3.41839 19.7099 4.17146 20.2429 4.79222 19.886L9.99983 16.8916L15.2082 19.886C15.829 20.2429 16.582 19.7099 16.4574 19.003L15.3559 12.7857L19.7504 8.39897C20.2458 7.90515 19.9612 7.05596 19.2705 6.96135Z" fill="currentColor" />
+    </svg>
+  );
+}

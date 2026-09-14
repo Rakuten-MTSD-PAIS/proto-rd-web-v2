@@ -19,9 +19,9 @@ export function FolderCards({ folders }: FolderCardsProps) {
   return (
     <div className="grid grid-cols-1 gap-5 px-5 py-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {folders.map((folder) => (
-        <div
+        <article
           key={folder.id}
-          className="group flex h-[60px] min-w-0 cursor-pointer items-center rounded-[8px] border border-[#E5E5EA] bg-white transition-colors hover:bg-[#F9F9FB]"
+          className="group flex min-h-[68px] min-w-0 items-center rounded-[8px] border border-[#E5E5EA] bg-white transition-colors hover:bg-[#F9F9FB]"
         >
           <div className="flex w-full items-center justify-between px-4">
             <div className="flex min-w-0 items-center gap-3">
@@ -33,7 +33,7 @@ export function FolderCards({ folders }: FolderCardsProps) {
             </div>
             <div className="ml-2 shrink-0"><MoreActionsMenu itemName={folder.name} isFolder /></div>
           </div>
-        </div>
+        </article>
       ))}
     </div>
   );

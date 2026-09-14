@@ -11,25 +11,38 @@ interface FileTableProps {
   showLocation?: boolean;
   teamFolders?: boolean;
   ownerFirst?: boolean;
-  selectedItemId?: string | null;
-  onSelectedItemChange?: (item: DriveItem | null) => void;
+  stickyHeaderTop?: number;
+  selectedItemIds?: string[];
+  onSelectedItemsChange?: (items: DriveItem[]) => void;
 }
 
-export function FileTable({ items, showOwner = false, showLocation = false, teamFolders = false, ownerFirst = false, selectedItemId, onSelectedItemChange }: FileTableProps) {
+export function FileTable({ items, showOwner = false, showLocation = false, teamFolders = false, ownerFirst = false, stickyHeaderTop = 56, selectedItemIds, onSelectedItemsChange }: FileTableProps) {
   const pageSize = 10;
   const [visibleCount, setVisibleCount] = useState(pageSize);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [internalSelectedId, setInternalSelectedId] = useState<string | null>(null);
+  const [internalSelectedItemIds, setInternalSelectedItemIds] = useState<string[]>([]);
   const loadMoreRef = useRef<HTMLTableRowElement>(null);
   const columnCount = 5 + Number(showOwner) + Number(showLocation);
   const visibleItems = items.slice(0, visibleCount);
   const hasMore = visibleCount < items.length;
-  const activeSelectedId = selectedItemId === undefined ? internalSelectedId : selectedItemId;
+  const activeSelectedItemIds = selectedItemIds ?? internalSelectedItemIds;
+  const allItemsSelected = items.length > 0 && items.every((item) => activeSelectedItemIds.includes(item.id));
 
   function selectItem(item: DriveItem) {
-    const nextId = activeSelectedId === item.id ? null : item.id;
-    if (selectedItemId === undefined) setInternalSelectedId(nextId);
-    onSelectedItemChange?.(nextId ? item : null);
+    const nextIds = activeSelectedItemIds.includes(item.id)
+      ? activeSelectedItemIds.filter((id) => id !== item.id)
+      : [...activeSelectedItemIds, item.id];
+    if (selectedItemIds === undefined) setInternalSelectedItemIds(nextIds);
+    onSelectedItemsChange?.(items.filter((candidate) => nextIds.includes(candidate.id)));
+  }
+
+  function selectAllItems(checked: boolean) {
+    const itemIds = items.map((item) => item.id);
+    const nextIds = checked
+      ? [...new Set([...activeSelectedItemIds, ...itemIds])]
+      : activeSelectedItemIds.filter((id) => !itemIds.includes(id));
+    if (selectedItemIds === undefined) setInternalSelectedItemIds(nextIds);
+    onSelectedItemsChange?.(items.filter((candidate) => nextIds.includes(candidate.id)));
   }
 
   useEffect(() => {
@@ -50,34 +63,36 @@ export function FileTable({ items, showOwner = false, showLocation = false, team
   }, [hasMore, isLoadingMore, items.length]);
 
   return (
-    <div className="w-full overflow-x-auto">
-      <table className="w-full border-collapse">
-        <thead className="sticky top-0 z-10 bg-white shadow-[0_1px_0_#E5E5EA]">
+    <div className="w-full overflow-hidden">
+      <table className="w-full table-fixed border-collapse">
+        <thead className="sticky z-10 bg-white shadow-[0_1px_0_#E5E5EA]" style={{ top: stickyHeaderTop }}>
           <tr className="h-[42px] border-b border-[#E5E5EA] bg-white" style={{ fontFamily: "'Rakuten Sans UI', sans-serif" }}>
             <th className="w-9 pl-3 pr-0">
               <Checkbox
+                checked={allItemsSelected}
+                onCheckedChange={(checked) => selectAllItems(checked === true)}
                 className="cursor-pointer border-[#C7C7CC]"
                 aria-label="Select all files"
               />
             </th>
             <th className="py-0 pl-2 pr-4 text-left text-[14px] font-normal leading-[20px] text-[#636366]">Name</th>
             {showOwner && ownerFirst && (
-              <th className="w-[150px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-[#636366]">Owner</th>
+              <th className="hidden w-[150px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-[#636366] lg:table-cell">Owner</th>
             )}
             <th className="w-[160px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-[#636366]">Modified</th>
-            <th className="w-[130px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-[#636366]">Size</th>
+            <th className="hidden w-[130px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-[#636366] lg:table-cell">Size</th>
             {showOwner && !ownerFirst && (
-              <th className="w-[150px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-[#636366]">Owner</th>
+              <th className="hidden w-[150px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-[#636366] lg:table-cell">Owner</th>
             )}
             {showLocation && (
-              <th className="w-[130px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-[#636366]">Location</th>
+              <th className="hidden w-[130px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-[#636366] lg:table-cell">Location</th>
             )}
-            <th className="w-[152px]" />
+            <th className="hidden w-[152px] sm:table-cell" />
           </tr>
         </thead>
         <tbody>
           {visibleItems.map((item) => (
-            <FileRow key={item.id} item={item} showOwner={showOwner} showLocation={showLocation} teamFolders={teamFolders} ownerFirst={ownerFirst} selected={activeSelectedId === item.id} onSelect={() => selectItem(item)} />
+            <FileRow key={item.id} item={item} showOwner={showOwner} showLocation={showLocation} teamFolders={teamFolders} ownerFirst={ownerFirst} compact showCheckbox={activeSelectedItemIds.length > 0} selected={activeSelectedItemIds.includes(item.id)} onSelect={() => selectItem(item)} />
           ))}
           {isLoadingMore && (
             <SkeletonRows columns={columnCount} />

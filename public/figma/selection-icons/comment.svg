@@ -1,0 +1,10 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="icons/comment-outline">
+<g id="comment-outline">
+<path d="M8 9.84615H3.69231V8.61538H8V9.84615Z" fill="#18181A"/>
+<path d="M3.69231 7.38462H12.3077V6.15385H3.69231V7.38462Z" fill="#18181A"/>
+<path d="M12.3077 4.92308H3.69231V3.69231H12.3077V4.92308Z" fill="#18181A"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M16 1.23077C16 0.551385 15.4486 0 14.7692 0H1.23077C0.551385 0 0 0.551385 0 1.23077V12.3077C0 12.9871 0.551385 13.5385 1.23077 13.5385H5.53846L8 16L10.4615 13.5385H14.7692C15.4486 13.5385 16 12.9871 16 12.3077V1.23077ZM14.7692 1.23077V12.3077H9.95138L8 14.2597L6.048 12.3077H1.23077V1.23077H14.7692Z" fill="#18181A"/>
+</g>
+</g>
+</svg>
