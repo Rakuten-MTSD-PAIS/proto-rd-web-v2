@@ -4,6 +4,22 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.send-files-scroll {
+  scrollbar-color: #AEAEB2 transparent;
+  scrollbar-width: thin;
+}
+
+.send-files-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.send-files-scroll::-webkit-scrollbar-thumb {
+  background: #AEAEB2;
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background-clip: content-box;
+}
+
 @font-face {
   font-family: 'Rakuten_Sans';
   src: url('/fonts/Rakuten_Sans-Regular.woff2') format('woff2');
@@ -489,4 +505,10 @@ input:focus-visible {
     font-size: var(--font-size-caption);
     line-height: var(--line-height-caption);
   }
+}
+
+@keyframes progress {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+  100% { transform: translateX(300%); }
 }

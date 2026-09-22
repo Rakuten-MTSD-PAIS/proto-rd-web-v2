@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { PageToolbar } from "@/components/drive/PageToolbar";
 import { FilterBar } from "@/components/drive/FilterBar";
 import { FileGrid } from "@/components/drive/FileGrid";
@@ -13,6 +14,11 @@ import type { DriveItem, ViewMode } from "@/lib/types";
 import { Copy, Download, FolderInput, Info, Link2, MessageSquare, MoreVertical, Pencil, Send, Share2, Star, Tag, Trash2, X } from "lucide-react";
 
 export default function MyDrivePage() {
+  const router = useRouter();
+  function openItem(item: DriveItem) {
+    if (item.type === "folder") { router.push("/drive/my-drive"); return; }
+    router.push(`/preview/${item.id}`);
+  }
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [filteredItems, setFilteredItems] = useState(myDriveItems);
   const [selectedItems, setSelectedItems] = useState<DriveItem[]>([]);
@@ -57,7 +63,7 @@ export default function MyDrivePage() {
           </div>
           {viewMode === "grid"
             ? <FileGrid items={filteredItems} selectedItemIds={selectedItems.map((i) => i.id)} onSelect={(id) => { const item = filteredItems.find((i) => i.id === id); if (item) toggleItemSelection(item); }} />
-            : <MyDriveFileList items={filteredItems} selectedItems={selectedItems} onSelect={toggleItemSelection} onInfo={(item) => { setSelectedItems([item]); setFolderInfoOpen(true); }} />
+            : <MyDriveFileList items={filteredItems} selectedItems={selectedItems} onSelect={toggleItemSelection} onOpen={openItem} onInfo={(item) => { setSelectedItems([item]); setFolderInfoOpen(true); }} />
           }
         </div>
         {folderInfoOpen && <RightSidePanel items={selectedItems} folderInfo={myDriveItems.find((item) => item.type === "folder") ?? myDriveItems[0]} onCloseFolderInfo={() => setFolderInfoOpen(false)} />}
@@ -114,7 +120,7 @@ function SelectionActionToolbar() {
   </div>;
 }
 
-const MY_DRIVE_COLUMNS = "grid-cols-[36px_minmax(0,1fr)] lg:grid-cols-[36px_minmax(0,1fr)_176px_120px_160px]";
+const MY_DRIVE_COLUMNS = "grid-cols-[36px_minmax(0,1fr)] lg:grid-cols-[36px_minmax(0,1fr)_176px_180px_120px]";
 
 function MyDriveListHeader({ items, selectedItems, onToggleAll }: { items: DriveItem[]; selectedItems: DriveItem[]; onToggleAll: (checked: boolean) => void }) {
   const selectedIds = new Set(selectedItems.map((item) => item.id));
@@ -124,13 +130,13 @@ function MyDriveListHeader({ items, selectedItems, onToggleAll }: { items: Drive
     <span className="px-3"><Checkbox checked={allSelected} onCheckedChange={(checked) => onToggleAll(checked === true)} className="border-[#C7C7CC]" aria-label="Select all files" /></span>
     <span className="px-2">Name</span>
     <span className="hidden lg:block px-4">Modified</span>
-    <span className="hidden lg:block px-4">Size</span>
     <span className="hidden lg:block px-4">Location</span>
+    <span className="hidden lg:block px-4">Size</span>
   </div>;
 }
 
-function MyDriveFileList({ items, selectedItems, onSelect, onInfo }: { items: DriveItem[]; selectedItems: DriveItem[]; onSelect: (item: DriveItem) => void; onInfo: (item: DriveItem) => void }) {
+function MyDriveFileList({ items, selectedItems, onSelect, onOpen, onInfo }: { items: DriveItem[]; selectedItems: DriveItem[]; onSelect: (item: DriveItem) => void; onOpen: (item: DriveItem) => void; onInfo: (item: DriveItem) => void }) {
   const selectedIds = new Set(selectedItems.map((item) => item.id));
 
-  return <div className="w-full overflow-hidden"><table className="block w-full border-collapse"><thead className="sr-only"><tr><th>Select</th><th>Name</th><th>Modified</th><th>Size</th><th>Location</th></tr></thead><tbody className="block w-full">{items.map((item) => <FileRow key={item.id} item={item} compact overlayActions showLocation showCheckbox={selectedItems.length > 0} selected={selectedIds.has(item.id)} onSelect={() => onSelect(item)} onInfo={() => onInfo(item)} gridColumns={MY_DRIVE_COLUMNS} showMobileMetadata />)}</tbody></table></div>;
+  return <div className="w-full overflow-hidden"><table className="block w-full border-collapse"><thead className="sr-only"><tr><th>Select</th><th>Name</th><th>Modified</th><th>Location</th><th>Size</th></tr></thead><tbody className="block w-full">{items.map((item) => <FileRow key={item.id} item={item} compact overlayActions showLocation showCheckbox={selectedItems.length > 0} selected={selectedIds.has(item.id)} onSelect={() => onSelect(item)} onOpen={selectedItems.length === 0 ? () => onOpen(item) : undefined} onInfo={() => onInfo(item)} gridColumns={MY_DRIVE_COLUMNS} showMobileMetadata />)}</tbody></table></div>;
 }

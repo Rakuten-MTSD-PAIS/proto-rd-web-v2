@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Copy, Download, FolderInput, Link2, MessageSquare, MoreVertical, Pencil, Send, Share2, Star, Tag, Trash2 } from "lucide-react";
 import { ShareLineIcon } from "@/components/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSendFilesDialog } from "@/components/drive/SendFilesModal";
 
 interface MoreActionsMenuProps {
   itemName: string;
@@ -36,6 +37,7 @@ export function ShareActionIcon() {
 
 export function MoreActionsMenu({ itemName, isFolder = false, onInfo, starred = false }: MoreActionsMenuProps) {
   const [open, setOpen] = useState(false);
+  const openSendFiles = useSendFilesDialog();
   const menuRef = useRef<HTMLDivElement>(null);
   const alwaysVisible = onInfo != null;
 
@@ -55,6 +57,10 @@ export function MoreActionsMenu({ itemName, isFolder = false, onInfo, starred = 
   }, []);
 
   const btn = "flex h-10 w-full items-center gap-3 px-3 text-left text-body-md text-[#18181A] hover:bg-[#F9F9FB] focus:bg-[#F9F9FB] focus:outline-none";
+  const handleSendFiles = () => {
+    setOpen(false);
+    openSendFiles();
+  };
 
   return (
     <div ref={menuRef} className="relative">
@@ -87,7 +93,7 @@ export function MoreActionsMenu({ itemName, isFolder = false, onInfo, starred = 
               <button type="button" role="menuitem" onClick={() => setOpen(false)} className={btn}>
                 <Link2 size={18} strokeWidth={1.75} className="text-foreground/50" aria-hidden="true" />Copy link
               </button>
-              <button type="button" role="menuitem" onClick={() => setOpen(false)} className={btn}>
+              <button type="button" role="menuitem" onClick={handleSendFiles} className={btn}>
                 <Send size={18} strokeWidth={1.75} className="text-foreground/50" aria-hidden="true" />Send files
               </button>
               <div className="my-1 border-t border-[#E5E5EA]" />
@@ -116,7 +122,7 @@ export function MoreActionsMenu({ itemName, isFolder = false, onInfo, starred = 
               {normalPrimaryActions
                 .filter((a) => !("skipForFolder" in a && isFolder && a.skipForFolder))
                 .map(({ label, icon: Icon }) => (
-                  <button key={label} type="button" role="menuitem" onClick={() => setOpen(false)} className={btn}>
+                  <button key={label} type="button" role="menuitem" onClick={label === "Send files" ? handleSendFiles : () => setOpen(false)} className={btn}>
                     <Icon size={18} strokeWidth={1.75} className="text-foreground/50" aria-hidden="true" />{label}
                   </button>
                 ))}

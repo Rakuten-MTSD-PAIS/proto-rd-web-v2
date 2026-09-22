@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { PageToolbar } from "@/components/drive/PageToolbar";
 import { FilterBar } from "@/components/drive/FilterBar";
 import { FileGrid } from "@/components/drive/FileGrid";
@@ -13,6 +14,11 @@ import type { DriveItem, ViewMode } from "@/lib/types";
 import { Copy, Download, FolderInput, Info, Link2, MessageSquare, MoreVertical, Pencil, Send, Share2, Star, Tag, Trash2, X } from "lucide-react";
 
 export default function SharedPage() {
+  const router = useRouter();
+  function openItem(item: DriveItem) {
+    if (item.type === "folder") { router.push("/drive/my-drive"); return; }
+    router.push(`/preview/${item.id}`);
+  }
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [filteredItems, setFilteredItems] = useState(sharedItems);
   const [selectedItems, setSelectedItems] = useState<DriveItem[]>([]);
@@ -101,6 +107,7 @@ export default function SharedPage() {
               items={allVisible}
               selectedItems={selectedItems}
               onSelect={toggleItemSelection}
+              onOpen={openItem}
               onInfo={(item) => { setSelectedItems([item]); setFolderInfoOpen(true); }}
             />
           )}
@@ -258,11 +265,13 @@ function SharedFileList({
   items,
   selectedItems,
   onSelect,
+  onOpen,
   onInfo,
 }: {
   items: DriveItem[];
   selectedItems: DriveItem[];
   onSelect: (item: DriveItem) => void;
+  onOpen: (item: DriveItem) => void;
   onInfo: (item: DriveItem) => void;
 }) {
   const selectedIds = new Set(selectedItems.map((item) => item.id));
@@ -287,6 +296,7 @@ function SharedFileList({
               showCheckbox={selectedItems.length > 0}
               selected={selectedIds.has(item.id)}
               onSelect={() => onSelect(item)}
+              onOpen={selectedItems.length === 0 ? () => onOpen(item) : undefined}
               onInfo={() => onInfo(item)}
               gridColumns={columns}
               showMobileMetadata

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { PageToolbar } from "@/components/drive/PageToolbar";
 import { FilterBar } from "@/components/drive/FilterBar";
 import { FileGrid } from "@/components/drive/FileGrid";
@@ -13,6 +14,11 @@ import type { DriveItem, ViewMode } from "@/lib/types";
 import { Copy, Download, FolderInput, Info, Link2, MessageSquare, MoreVertical, Pencil, Send, Share2, Star, Tag, Trash2, X } from "lucide-react";
 
 export default function StarredPage() {
+  const router = useRouter();
+  function openItem(item: DriveItem) {
+    if (item.type === "folder") { router.push("/drive/my-drive"); return; }
+    router.push(`/preview/${item.id}`);
+  }
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [filteredItems, setFilteredItems] = useState(starredItems);
   const [selectedItems, setSelectedItems] = useState<DriveItem[]>([]);
@@ -99,6 +105,7 @@ export default function StarredPage() {
               items={filteredItems}
               selectedItems={selectedItems}
               onSelect={toggleItemSelection}
+              onOpen={openItem}
               onInfo={(item) => { setSelectedItems([item]); setFolderInfoOpen(true); }}
             />
           )}
@@ -219,7 +226,7 @@ function SelectionActionToolbar() {
   );
 }
 
-const STARRED_COLUMNS = "grid-cols-[36px_minmax(0,1fr)] lg:grid-cols-[36px_minmax(0,1fr)_176px_120px] xl:grid-cols-[36px_minmax(0,1fr)_150px_176px_120px_160px]";
+const STARRED_COLUMNS = "grid-cols-[36px_minmax(0,1fr)] lg:grid-cols-[36px_minmax(0,1fr)_176px_120px] xl:grid-cols-[36px_minmax(0,1fr)_150px_176px_180px_120px]";
 
 function StarredListHeader({
   items,
@@ -248,8 +255,8 @@ function StarredListHeader({
       <span className="px-2">Name</span>
       <span className="hidden xl:block px-4">Owner</span>
       <span className="hidden lg:block px-4">Modified</span>
-      <span className="hidden lg:block px-4">Size</span>
       <span className="hidden xl:block px-4">Location</span>
+      <span className="hidden lg:block px-4">Size</span>
     </div>
   );
 }
@@ -258,11 +265,13 @@ function StarredFileList({
   items,
   selectedItems,
   onSelect,
+  onOpen,
   onInfo,
 }: {
   items: DriveItem[];
   selectedItems: DriveItem[];
   onSelect: (item: DriveItem) => void;
+  onOpen: (item: DriveItem) => void;
   onInfo: (item: DriveItem) => void;
 }) {
   const selectedIds = new Set(selectedItems.map((item) => item.id));
@@ -288,6 +297,7 @@ function StarredFileList({
               showCheckbox={selectedItems.length > 0}
               selected={selectedIds.has(item.id)}
               onSelect={() => onSelect(item)}
+              onOpen={selectedItems.length === 0 ? () => onOpen(item) : undefined}
               onInfo={() => onInfo(item)}
               gridColumns={STARRED_COLUMNS}
               showMobileMetadata

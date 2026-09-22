@@ -3,13 +3,16 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
+import { SendFilesDialogProvider, SendFilesModal } from "@/components/drive/SendFilesModal";
 
 export default function DriveLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sendFilesOpen, setSendFilesOpen] = useState(false);
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-[#F2F2F7]">
+    <SendFilesDialogProvider onOpen={() => setSendFilesOpen(true)}>
+      <div className="flex h-dvh overflow-hidden bg-[#F2F2F7]">
       {mobileOpen && (
         <button
           type="button"
@@ -29,6 +32,7 @@ export default function DriveLayout({ children }: { children: React.ReactNode })
           }}
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
+        onSendFiles={() => setSendFilesOpen(true)}
       />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header onMenuClick={() => setMobileOpen(true)} />
@@ -36,6 +40,8 @@ export default function DriveLayout({ children }: { children: React.ReactNode })
           {children}
         </main>
       </div>
-    </div>
+      {sendFilesOpen && <SendFilesModal onClose={() => setSendFilesOpen(false)} />}
+      </div>
+    </SendFilesDialogProvider>
   );
 }

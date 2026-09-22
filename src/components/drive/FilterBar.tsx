@@ -22,6 +22,7 @@ interface FilterBarProps {
   typeLabel?: string;
   peopleLabel?: string;
   modifiedLabel?: string;
+  searchQuery?: string;
 }
 
 type Menu = "type" | "people" | "modified" | null;
@@ -52,7 +53,7 @@ function matchesModified(item: DriveItem, filter: DateFilter, from: string, to: 
   return date.getFullYear() === 2025;
 }
 
-export function FilterBar({ items, viewMode, onItemsChange, onViewModeChange, hideFilters = false, hidePeople = false, hideType = false, hideModified = false, hideViewControls = false, endAdornment, appendFilters, peopleLabel, modifiedLabel }: FilterBarProps) {
+export function FilterBar({ items, viewMode, onItemsChange, onViewModeChange, hideFilters = false, hidePeople = false, hideType = false, hideModified = false, hideViewControls = false, endAdornment, appendFilters, peopleLabel, modifiedLabel, searchQuery = "" }: FilterBarProps) {
   const [openMenu, setOpenMenu] = useState<Menu>(null);
   const [selectedTypes, setSelectedTypes] = useState<Set<FileType>>(new Set());
   const [selectedPeople, setSelectedPeople] = useState<Set<string>>(new Set());
@@ -75,9 +76,15 @@ export function FilterBar({ items, viewMode, onItemsChange, onViewModeChange, hi
       if (peopleRelationship === "sharedWith") return item.sharedWith?.includes(selectedPerson) ?? false;
       return item.owner === selectedPerson || item.creator === selectedPerson || item.sharedWith?.includes(selectedPerson) === true;
     };
-    const matching = items.filter((item) => (selectedTypes.size === 0 || selectedTypes.has(item.type)) && matchesPerson(item) && matchesModified(item, modified, fromDate, toDate));
+    const q = searchQuery.trim().toLowerCase();
+    const matching = items.filter((item) =>
+      (selectedTypes.size === 0 || selectedTypes.has(item.type)) &&
+      matchesPerson(item) &&
+      matchesModified(item, modified, fromDate, toDate) &&
+      (!q || item.name.toLowerCase().includes(q))
+    );
     return [...matching.filter((item) => item.type === "folder"), ...matching.filter((item) => item.type !== "folder")];
-  }, [fromDate, items, modified, peopleRelationship, selectedPeople, selectedTypes, toDate]);
+  }, [fromDate, items, modified, peopleRelationship, searchQuery, selectedPeople, selectedTypes, toDate]);
 
   useEffect(() => { onItemsChangeRef.current(filteredItems); }, [filteredItems]);
   useEffect(() => {

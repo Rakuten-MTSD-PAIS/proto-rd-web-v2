@@ -106,29 +106,29 @@ export function FileRow({ item, showOwner = false, showLocation = false, teamFol
 
       {/* Owner */}
       {showOwner && ownerFirst && (
-          <td className={`w-[150px] px-4 py-2 ${gridColumns ? "flex items-center" : ""} ${compact ? compactMetadataVisibility : ""}`}>
+          <td onClick={onSelect} className={`w-[150px] px-4 py-2 ${gridColumns ? "flex items-center" : ""} ${compact ? compactMetadataVisibility : ""} ${onSelect ? "cursor-default" : ""}`}>
           <OwnerAvatar item={item} />
         </td>
       )}
 
       {/* Modified */}
-      <td className={`w-[176px] whitespace-nowrap px-4 py-2 text-[14px] leading-[20px] text-muted-foreground ${gridColumns ? "flex items-center" : ""} ${showMobileMetadata ? "hidden lg:flex" : ""} ${alignMetadataEnd ? "text-right" : ""}`}>{item.modified}</td>
-
-      {/* Size */}
-      <td className={`w-[120px] whitespace-nowrap px-4 py-2 text-[14px] leading-[20px] text-muted-foreground ${gridColumns ? "flex items-center" : ""} ${showMobileMetadata ? "hidden lg:flex" : compact ? compactMetadataVisibility : ""} ${alignMetadataEnd ? "text-right" : ""}`}>{item.size}</td>
+      <td onClick={onSelect} className={`w-[176px] whitespace-nowrap px-4 py-2 text-[14px] leading-[20px] text-muted-foreground ${gridColumns ? "flex items-center" : ""} ${showMobileMetadata ? "hidden lg:flex" : ""} ${alignMetadataEnd ? "text-right" : ""} ${onSelect ? "cursor-default" : ""}`}>{item.modified}</td>
 
       {showOwner && !ownerFirst && (
-          <td className={`w-[160px] px-4 py-2 ${gridColumns ? "flex items-center" : ""} ${compact ? compactMetadataVisibility : ""}`}>
+          <td onClick={onSelect} className={`w-[160px] px-4 py-2 ${gridColumns ? "flex items-center" : ""} ${compact ? compactMetadataVisibility : ""} ${onSelect ? "cursor-default" : ""}`}>
           <OwnerAvatar item={item} />
         </td>
       )}
 
-      {/* Location stays in place while row actions appear at the far edge. */}
+      {/* Location */}
       {showLocation && (
-        <td className={`w-[180px] truncate px-4 py-2 text-[13px] text-muted-foreground ${gridColumns ? "flex items-center" : ""} ${compact ? compactMetadataVisibility : ""} ${alignMetadataEnd ? "text-right" : ""}`} title={item.location}>
+        <td onClick={onSelect} className={`w-[180px] truncate px-4 py-2 text-[13px] text-muted-foreground ${gridColumns ? "flex items-center" : ""} ${compact ? compactMetadataVisibility : ""} ${alignMetadataEnd ? "text-right" : ""} ${onSelect ? "cursor-default" : ""}`} title={item.location}>
           {item.location}
         </td>
       )}
+
+      {/* Size — rightmost metadata column */}
+      <td onClick={onSelect} className={`w-[120px] whitespace-nowrap px-4 py-2 text-[14px] leading-[20px] text-muted-foreground ${gridColumns ? "flex items-center" : ""} ${showMobileMetadata ? "hidden lg:flex" : compact ? compactMetadataVisibility : ""} ${alignMetadataEnd ? "text-right" : ""} ${onSelect ? "cursor-default" : ""}`}>{item.size}</td>
 
       {!hideActions && <td className={overlayActions ? "absolute inset-y-0 right-3 flex items-center" : `w-[152px] py-2 pr-3 ${compact ? "hidden sm:table-cell" : ""}`}>
         <div onClick={(event) => event.stopPropagation()} className="flex items-center justify-end gap-1">

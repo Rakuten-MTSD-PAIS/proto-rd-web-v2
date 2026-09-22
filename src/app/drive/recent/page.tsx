@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FilterBar } from "@/components/drive/FilterBar";
 import { FileRow } from "@/components/drive/FileRow";
 import { FolderCards } from "@/components/drive/FolderCards";
@@ -11,11 +11,14 @@ import { recentFileGroups, recentFolders, recentItems } from "@/lib/mock-data";
 import type { DriveItem, ViewMode } from "@/lib/types";
 import { FileGrid } from "@/components/drive/FileGrid";
 import { RightSidePanel } from "@/components/drive/RightSidePanel";
-import { Copy, Download, FolderInput, Info, Link2, MessageSquare, MoreVertical, Pencil, Send, Share2, Star, Tag, Trash2, X } from "lucide-react";
+import { Copy, Download, FolderInput, Info, Link2, MessageSquare, MoreVertical, Pencil, SearchX, Send, Share2, Star, Tag, Trash2, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function RecentPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("search") ?? "";
+  const isSearching = searchQuery.trim().length > 0;
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [foldersOpen, setFoldersOpen] = useState(true);
   const [filteredItems, setFilteredItems] = useState(recentItems);
@@ -28,7 +31,7 @@ export default function RecentPage() {
     .filter(({ items }) => items.length > 0);
   const selectedItems = recentItems.filter((item) => selectedItemIds.includes(item.id));
   const allFilteredItemsSelected = filteredItems.length > 0 && filteredItems.every((item) => selectedItemIds.includes(item.id));
-  const listHeaderColumns = "grid-cols-[36px_minmax(0,1fr)] lg:grid-cols-[36px_minmax(0,1fr)_176px] xl:grid-cols-[36px_minmax(0,1fr)_176px_120px_160px_180px]";
+  const listHeaderColumns = "grid-cols-[36px_minmax(0,1fr)] lg:grid-cols-[36px_minmax(0,1fr)_176px] xl:grid-cols-[36px_minmax(0,1fr)_176px_160px_180px_120px]";
   const metadataBreakpoint = "xl";
 
   function toggleItemSelection(id: string) {
@@ -47,30 +50,41 @@ export default function RecentPage() {
       router.push(item.location === "Team Drive" ? "/drive/team-drive" : "/drive/my-drive");
       return;
     }
-    router.push(`/drive/recent/${item.id}`);
+    router.push(`/preview/${item.id}`);
   }
 
   return <div className="flex min-h-full flex-col">
-    <section aria-labelledby="recent-folders-heading">
-      <div className="flex items-center px-6 py-3">
-        <h2 id="recent-folders-heading" className="text-[20px] font-normal leading-[28px] text-muted-foreground">
-          <button type="button" onClick={() => setFoldersOpen((open) => !open)} className="flex min-h-10 items-center gap-3 rounded-[6px] transition-colors hover:text-[#18181A]" aria-expanded={foldersOpen} aria-controls="recent-folders-content">
-            <ChevronDownIcon size={12} className={`shrink-0 text-foreground/50 transition-transform motion-reduce:transition-none ${foldersOpen ? "" : "-rotate-90"}`} aria-hidden="true" />
-            Recent folders
-          </button>
-        </h2>
-      </div>
-      {foldersOpen && <div id="recent-folders-content"><FolderCards folders={recentFolders} /></div>}
-    </section>
+    {!isSearching && (
+      <section aria-labelledby="recent-folders-heading">
+        <div className="flex items-center px-6 py-3">
+          <h2 id="recent-folders-heading" className="text-[20px] font-normal leading-[28px] text-muted-foreground">
+            <button type="button" onClick={() => setFoldersOpen((open) => !open)} className="flex min-h-10 items-center gap-3 rounded-[6px] transition-colors hover:text-[#18181A]" aria-expanded={foldersOpen} aria-controls="recent-folders-content">
+              <ChevronDownIcon size={12} className={`shrink-0 text-foreground/50 transition-transform motion-reduce:transition-none ${foldersOpen ? "" : "-rotate-90"}`} aria-hidden="true" />
+              Recent folders
+            </button>
+          </h2>
+        </div>
+        {foldersOpen && <div id="recent-folders-content"><FolderCards folders={recentFolders} /></div>}
+      </section>
+    )}
 
     <section className="flex min-w-0 flex-1" aria-labelledby="recent-files-heading">
       <div className="min-w-0 flex-1">
         <div className={`sticky top-0 z-30 bg-white px-6 pt-3 ${viewMode === "list" ? "pb-0" : "pb-3"}`}>
-          <div className="mb-3 flex items-baseline gap-2">
-            <h1 id="recent-files-heading" className="text-[20px] font-normal leading-[28px] text-[#18181A]">Recent files</h1>
+          <div className="mb-3 flex flex-wrap items-baseline gap-2">
+            {isSearching ? (
+              <h1 id="recent-files-heading" className="flex items-center gap-2 text-[20px] font-normal leading-[28px] text-[#18181A]">
+                <button type="button" onClick={() => router.push("/drive/recent")} aria-label="Clear search" className="flex size-6 items-center justify-center rounded-full text-foreground/40 transition-colors hover:bg-[#F2F2F7] hover:text-[#18181A]">
+                  <X size={16} strokeWidth={2} aria-hidden="true" />
+                </button>
+                Search results for &ldquo;{searchQuery}&rdquo;
+              </h1>
+            ) : (
+              <h1 id="recent-files-heading" className="text-[20px] font-normal leading-[28px] text-[#18181A]">Recent files</h1>
+            )}
             <span aria-hidden="true" className="text-[14px] leading-[20px] text-muted-foreground">|</span>
             <span className="text-[14px] leading-[20px] text-muted-foreground" role="status" aria-live="polite">
-              {selectedItems.length > 0 ? `${selectedItems.length} ${selectedItems.length === 1 ? "item" : "items"} selected` : `${filteredItems.length} items`}
+              {selectedItems.length > 0 ? `${selectedItems.length} ${selectedItems.length === 1 ? "item" : "items"} selected` : `${filteredItems.length} ${filteredItems.length === 1 ? "result" : "results"}`}
             </span>
           </div>
           {selectedItems.length > 0 ? (
@@ -82,19 +96,19 @@ export default function RecentPage() {
                 </button>
                 <SelectionActionToolbar />
               </div>
-              <FilterBar items={recentItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={setViewMode} hideFilters endAdornment={<InfoButton onClick={() => setFolderInfoOpen((open) => !open)} />} />
+              <FilterBar items={recentItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={setViewMode} hideFilters searchQuery={searchQuery} endAdornment={<InfoButton onClick={() => setFolderInfoOpen((open) => !open)} />} />
             </div>
           ) : (
-            <FilterBar items={recentItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={setViewMode} endAdornment={<InfoButton onClick={() => setFolderInfoOpen((open) => !open)} />} />
+            <FilterBar items={recentItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={setViewMode} searchQuery={searchQuery} endAdornment={<InfoButton onClick={() => setFolderInfoOpen((open) => !open)} />} />
           )}
           {viewMode === "list" && (
             <div className={`mt-3 -mx-6 grid h-[42px] items-center border-b border-[#F2F2F7] bg-white text-left text-[14px] font-normal leading-[20px] text-muted-foreground shadow-[0_1px_0_#E5E5EA] ${listHeaderColumns}`}>
               <span className="px-3"><Checkbox checked={allFilteredItemsSelected} onCheckedChange={(checked) => toggleAllSelection(checked === true)} className="border-[#C7C7CC]" aria-label="Select all recent files" /></span>
               <span className="px-2">Name</span>
               <span className="hidden lg:block px-4">Modified</span>
-              <span className="hidden xl:block px-4">Size</span>
               <span className="hidden xl:block px-4">Owner</span>
               <span className="hidden xl:block px-4">Location</span>
+              <span className="hidden xl:block px-4">Size</span>
             </div>
           )}
         </div>
@@ -104,12 +118,26 @@ export default function RecentPage() {
               <thead className="sr-only"><tr><th>Select</th><th>Name</th><th>Modified</th><th>Size</th><th>Owner</th><th>Location</th></tr></thead>
               <tbody className="block w-full">
                 {filteredGroups.length === 0
-                  ? <tr><td colSpan={6} className="block py-12 text-center text-[14px] text-muted-foreground">No files match the selected filters.</td></tr>
+                  ? <tr className="block w-full"><td colSpan={6} className="block w-full">
+                      {isSearching ? (
+                        <div className="flex w-full flex-col items-center justify-center gap-4 py-24 text-center">
+                          <div className="flex size-16 items-center justify-center rounded-full bg-[#F2F2F7]">
+                            <SearchX size={32} className="text-foreground/40" aria-hidden="true" />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <p className="text-[16px] font-medium text-[#18181A]">No results for &ldquo;<span className="text-muted-foreground">{searchQuery}</span>&rdquo;</p>
+                            <p className="text-[14px] text-muted-foreground">Try different keywords or remove filters</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-full py-16 text-center text-[14px] text-muted-foreground">No files match the selected filters.</div>
+                      )}
+                    </td></tr>
                   : filteredGroups.map(({ group, items }) => (
                     <Fragment key={group}>
                       <tr className={`grid w-full ${listHeaderColumns}`}><td colSpan={6} className="col-span-full h-12 bg-white pl-3 pt-3 text-[14px] text-muted-foreground">{group}</td></tr>
                       {items.map((item) => (
-                        <FileRow key={item.id} item={item} showOwner showLocation compact metadataBreakpoint={metadataBreakpoint} overlayActions showCheckbox={selectedItemIds.length > 0} showMobileMetadata selected={selectedItemIds.includes(item.id)} onSelect={() => toggleItemSelection(item.id)} onOpen={selectedItems.length === 0 ? () => openItem(item) : undefined} selectOnMetadata gridColumns={listHeaderColumns} />
+                        <FileRow key={item.id} item={item} showOwner showLocation compact metadataBreakpoint={metadataBreakpoint} overlayActions showCheckbox={selectedItemIds.length > 0} showMobileMetadata selected={selectedItemIds.includes(item.id)} onSelect={() => toggleItemSelection(item.id)} onOpen={selectedItems.length === 0 ? () => openItem(item) : undefined} onInfo={() => setFolderInfoOpen(true)} gridColumns={listHeaderColumns} />
                       ))}
                     </Fragment>
                   ))

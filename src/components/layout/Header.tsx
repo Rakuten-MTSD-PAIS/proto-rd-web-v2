@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { CircleHelp, Database, FileBadge, FileImage, FilePenLine, Folder, LogOut, LockKeyhole, MessageSquareText, SearchX, Settings, SlidersHorizontal, Square, X } from "lucide-react";
+import { CircleHelp, Clock, Database, FileBadge, FileImage, FilePenLine, Folder, LogOut, LockKeyhole, MessageSquareText, SearchX, Settings, SlidersHorizontal, Square, X } from "lucide-react";
 import { SearchIcon, ChevronDownIcon } from "@/components/icons";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FilterBar } from "@/components/drive/FilterBar";
 import type { DriveItem, ViewMode } from "@/lib/types";
 import { myDriveItems, recentItems, sharedItems, starredItems, teamDriveItems } from "@/lib/mock-data";
@@ -28,9 +28,37 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSearchSuggestions, setFilteredSearchSuggestions] = useState<DriveItem[]>(searchSuggestions);
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try { return JSON.parse(localStorage.getItem("rd-recent-searches") ?? "[]"); } catch { return []; }
+  });
   const accountMenuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const urlQuery = searchParams.get("search") ?? "";
+    if (urlQuery) setSearchQuery(urlQuery);
+  }, [searchParams]);
+
+  const saveRecentSearch = (query: string) => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    setRecentSearches((prev) => {
+      const next = [trimmed, ...prev.filter((s) => s !== trimmed)].slice(0, 8);
+      localStorage.setItem("rd-recent-searches", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const removeRecentSearch = (query: string) => {
+    setRecentSearches((prev) => {
+      const next = prev.filter((s) => s !== query);
+      localStorage.setItem("rd-recent-searches", JSON.stringify(next));
+      return next;
+    });
+  };
 
   useEffect(() => {
     const closeOnOutsidePress = (event: MouseEvent) => {
@@ -55,9 +83,11 @@ export function Header({ onMenuClick }: HeaderProps) {
     `${name} ${owner}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const showAllResults = () => {
+  const showAllResults = (query = searchQuery) => {
+    const trimmed = query.trim();
+    saveRecentSearch(trimmed);
     const params = new URLSearchParams();
-    if (searchQuery.trim()) params.set("search", searchQuery.trim());
+    if (trimmed) params.set("search", trimmed);
     router.push(`/drive/recent?${params.toString()}`);
     setSearchOpen(false);
   };
@@ -86,76 +116,74 @@ export function Header({ onMenuClick }: HeaderProps) {
               onChange={(event) => setSearchQuery(event.target.value)}
               onFocus={() => setSearchOpen(true)}
               onKeyDown={(event) => {
-                if (event.key === "Enter") showAllResults();
+                if (event.key === "Enter") showAllResults(searchQuery);
               }}
               className="h-auto flex-1 border-0 bg-transparent p-0 text-[14px] leading-[20px] shadow-none focus-visible:border-0 focus-visible:ring-0"
               style={{ fontFamily: "'Rakuten Sans UI', sans-serif" }}
             />
+            {searchQuery && (
+              <button type="button" onClick={() => { setSearchQuery(""); router.push("/drive/recent"); }} aria-label="Clear search" className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#C7C7CC] text-white transition-colors hover:bg-[#8E8E93]">
+                <X size={12} strokeWidth={2.5} aria-hidden="true" />
+              </button>
+            )}
           </div>
         {searchOpen && (
           <section
             className="absolute left-0 top-[calc(100%+8px)] z-[1000] flex w-full max-h-[calc(100dvh-84px)] flex-col overflow-visible rounded-[16px] border border-border-subtle bg-background shadow-[0_16px_40px_rgba(24,24,26,0.16)] max-md:fixed max-md:left-4 max-md:top-[68px] max-md:w-[calc(100vw-2rem)]"
             aria-label="Search suggestions"
           >
-            <div className="flex items-center justify-between border-b border-border-subtle px-5 py-4">
-              <div className="flex min-w-0 items-center gap-3">
-                <SearchIcon size={20} className="shrink-0 text-foreground/50" />
-                <p className="truncate text-body-lg text-foreground">{searchQuery || "Search files and folders"}</p>
-                <kbd className="hidden rounded border border-border-subtle px-1.5 py-0.5 text-caption text-muted-foreground sm:inline">Esc</kbd>
-              </div>
-              <div className="flex shrink-0 items-center gap-1">
-                <Button type="button" variant="ghost" size="icon" aria-label="Advanced search" onClick={() => router.push("/drive/recent?advanced-search=true")}>
-                  <SlidersHorizontal />
-                </Button>
-                <Button type="button" variant="ghost" size="icon" aria-label="Close search" onClick={() => setSearchOpen(false)}>
-                  <X />
-                </Button>
-              </div>
-            </div>
-
             <div className="border-b border-border-subtle px-5 py-3">
-              <FilterBar items={searchSuggestions} viewMode={"list" as ViewMode} onItemsChange={setFilteredSearchSuggestions} onViewModeChange={() => {}} hideViewControls />
+              <FilterBar items={searchSuggestions} viewMode={"list" as ViewMode} onItemsChange={setFilteredSearchSuggestions} onViewModeChange={() => {}} hideViewControls searchQuery={searchQuery} />
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-5">
-              {visibleSuggestions.length ? (
-                <div className="flex flex-col gap-1">
-                  {visibleSuggestions.slice(0, 6).map((suggestion) => {
-                    const Icon = suggestion.type === "folder" ? Folder : FileImage;
-                    return (
-                      <Button
-                        key={suggestion.name}
-                        type="button"
-                        variant="ghost"
-                        className="h-auto w-full justify-start gap-3 px-3 py-3 text-left"
-                        onClick={showAllResults}
-                      >
-                        <Icon className="size-5 shrink-0 text-foreground/50" aria-hidden="true" />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-body-md font-medium text-foreground">{suggestion.name}</span>
-                          <span className="mt-0.5 block truncate text-caption text-muted-foreground">{suggestion.owner}</span>
-                        </span>
-                      </Button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-                  <SearchX className="size-8 text-foreground/50" aria-hidden="true" />
-                  <p className="text-body-md text-muted-foreground">No matching files or folders</p>
-                </div>
-              )}
+              {(() => {
+                const q = searchQuery.trim().toLowerCase();
+                const matchingRecent = recentSearches.filter((s) => !q || s.toLowerCase().includes(q));
+                if (matchingRecent.length > 0) {
+                  return (
+                    <div className="flex flex-col">
+                      <p className="px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Recent searches</p>
+                      {matchingRecent.map((query) => (
+                        <div key={query} className="group flex items-center gap-3 rounded-[8px] px-3 py-2.5 hover:bg-[#F6F7FC]">
+                          <Clock className="size-4 shrink-0 text-foreground/40" aria-hidden="true" />
+                          <button type="button" className="min-w-0 flex-1 text-left text-[14px] text-foreground" onClick={() => { setSearchQuery(query); showAllResults(query); }}>
+                            {query}
+                          </button>
+                          <button type="button" onClick={() => removeRecentSearch(query)} className="hidden size-6 items-center justify-center rounded-full text-foreground/40 hover:bg-[#E5E5EA] hover:text-foreground group-hover:flex" aria-label={`Remove "${query}" from recent searches`}>
+                            <X size={13} strokeWidth={2} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+                if (!q) {
+                  return (
+                    <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                      <SearchIcon size={28} className="text-foreground/30" aria-hidden="true" />
+                      <p className="text-[14px] text-muted-foreground">Search for files and folders</p>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                    <SearchIcon size={28} className="text-foreground/30" aria-hidden="true" />
+                    <p className="text-[14px] text-muted-foreground">Press Enter to search for &ldquo;{searchQuery}&rdquo;</p>
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="flex items-center justify-between border-t border-border-subtle px-5 py-3">
-              <Button type="button" variant="ghost" className="text-primary" onClick={() => router.push("/drive/recent?advanced-search=true")}>
-                <SlidersHorizontal data-icon="inline-start" />
-                Advanced search
-              </Button>
-              <Button type="button" onClick={showAllResults}>
-                <SearchIcon data-icon="inline-start" />
+              <button type="button" onClick={() => { setSearchOpen(false); setSearchQuery(""); router.push("/drive/recent"); }} className="flex h-10 items-center gap-2 rounded-[8px] border border-[#E1E1E6] bg-white px-4 text-[14px] font-medium text-[#18181A] transition-colors hover:bg-[#F9F9FB]">
+                <X size={15} strokeWidth={2} aria-hidden="true" />
+                Cancel
+              </button>
+              <button type="button" onClick={showAllResults} className="flex h-10 items-center gap-2 rounded-[8px] bg-[#002896] px-4 text-[14px] font-medium text-white transition-colors hover:bg-[#001F73]">
+                <SearchIcon size={15} />
                 Search
-              </Button>
+              </button>
             </div>
           </section>
         )}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import horizontalLogo from "../../../reference ui/Rakuten Drive logo_1line.png";
 import compactLogo from "../../../reference ui/2 RECENT/SIDEBAR/RD logo small.png";
 import { STORAGE_USED_MB, STORAGE_TOTAL_TB, STORAGE_PERCENT } from "@/lib/mock-data";
@@ -13,6 +13,7 @@ interface SidebarProps {
   onToggle: () => void;
   mobileOpen: boolean;
   onMobileClose: () => void;
+  onSendFiles: () => void;
 }
 
 const mainNav = [
@@ -26,8 +27,8 @@ const mainNav = [
 
 const transferSubNav = [
   { href: "/drive/send-files", label: "Send Files", icon: "/navigation-icons/send-files.svg" },
-  { href: "/drive/my-link", label: "My Link", icon: "/navigation-icons/my-link.svg" },
-  { href: "/drive/received", label: "Received Link", icon: "/navigation-icons/received-link.svg" },
+  { href: "/drive/my-link", label: "My Links", icon: "/navigation-icons/my-link.svg" },
+  { href: "/drive/received", label: "Received Links", icon: "/navigation-icons/received-link.svg" },
 ];
 
 function NavigationIcon({ src, active, size = 16 }: { src: string; active: boolean; size?: number }) {
@@ -47,9 +48,9 @@ function NavigationIcon({ src, active, size = 16 }: { src: string; active: boole
   );
 }
 
-export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose, onSendFiles }: SidebarProps) {
   const pathname = usePathname();
-  const [transferOpen, setTransferOpen] = useState(true);
+  const searchParams = useSearchParams();
   const [isMdLg, setIsMdLg] = useState(false);
 
   useEffect(() => {
@@ -61,7 +62,8 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
   }, []);
 
   const iconOnly = collapsed || (isMdLg && !mobileOpen);
-  const isActive = (href: string) => pathname.startsWith(href);
+  const isSearching = searchParams.get("search") != null && searchParams.get("search") !== "";
+  const isActive = (href: string) => !isSearching && pathname.startsWith(href);
 
   return (
     <aside
@@ -139,52 +141,58 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
         </div>
 
         {/* Transfer section */}
-        <div className="mt-10 border-t border-border-subtle pt-3">
+        <section className="border-t border-border-subtle pt-5" aria-labelledby="transfer-heading">
           {!iconOnly ? (
             <>
-              {/* Transfer section header */}
-              <button
-                onClick={() => setTransferOpen((v) => !v)}
-                className="flex h-10 w-full items-center gap-2 rounded-[8px] px-[16px] text-[16px] leading-[24px] font-normal text-muted-foreground hover:bg-[rgba(0,40,150,0.06)] transition-colors"
-                aria-label="Toggle transfer navigation"
-                aria-expanded={transferOpen}
-              >
-                <span>Transfer</span>
-                <span className={`ml-auto shrink-0 text-foreground/50 transition-transform ${transferOpen ? "" : "-rotate-90"}`}>
-                  <NavigationIcon src="/navigation-icons/transfer.svg" active={false} size={12} />
-                </span>
-              </button>
-
-              {/* Transfer sub-items */}
-              {transferOpen && (
-                <div className="mt-2 flex flex-col gap-2">
-                  {transferSubNav.map(({ href, label, icon }) => {
-                    const active = isActive(href);
+              <h2 id="transfer-heading" className="px-4 font-['Rakuten_Sans_UI'] text-[0.875rem] font-normal leading-6 text-[#636366]">Transfer</h2>
+              <div className="mt-3 flex flex-col gap-2">
+                {transferSubNav.map(({ href, label, icon }) => {
+                  const active = isActive(href);
+                  if (label === "Send Files") {
                     return (
-                      <Link
+                      <button
                         key={href}
-                        href={href}
-                          className={`flex items-center gap-3 h-10 pl-[40px] pr-[16px] rounded-[8px] text-[16px] leading-[24px] transition-colors ${
-                          active
-                            ? "bg-[rgba(0,40,150,0.1)] text-[#002896] font-semibold"
-                            : "text-[#030303] font-normal hover:bg-[rgba(0,40,150,0.06)]"
-                        }`}
-                          onClick={onMobileClose}
-                          title={label}
-                        >
-                        <NavigationIcon src={icon} active={active} />
+                        type="button"
+                        className="flex h-10 items-center gap-3 rounded-[8px] px-4 text-[16px] leading-[24px] font-normal text-[#030303] transition-colors hover:bg-[rgba(0,40,150,0.06)]"
+                        onClick={() => { onSendFiles(); onMobileClose(); }}
+                        title={label}
+                      >
+                        <NavigationIcon src={icon} active={false} />
                         <span className="truncate">{label}</span>
-                      </Link>
+                      </button>
                     );
-                  })}
-                </div>
-              )}
+                  }
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      className={`flex h-10 items-center gap-3 rounded-[8px] px-4 text-[16px] leading-[24px] transition-colors ${
+                        active
+                          ? "bg-[rgba(0,40,150,0.1)] text-[#002896] font-semibold"
+                          : "text-[#030303] font-normal hover:bg-[rgba(0,40,150,0.06)]"
+                      }`}
+                      onClick={onMobileClose}
+                      title={label}
+                    >
+                      <NavigationIcon src={icon} active={active} />
+                      <span className="truncate">{label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
             </>
           ) : (
             /* Collapsed: just icons */
             <div className="flex flex-col gap-2">
               {transferSubNav.map(({ href, label, icon }) => {
                 const active = isActive(href);
+                if (label === "Send Files") {
+                  return (
+                    <button key={href} type="button" className="flex h-10 items-center justify-center rounded-[8px] text-[#18181A] transition-colors hover:bg-[rgba(0,40,150,0.06)]" title={label} onClick={() => { onSendFiles(); onMobileClose(); }}>
+                      <NavigationIcon src={icon} active={false} />
+                    </button>
+                  );
+                }
                 return (
                   <Link
                     key={href}
@@ -203,7 +211,8 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
               })}
             </div>
           )}
-        </div>
+        </section>
+
       </nav>
 
       {/* Storage widget */}
