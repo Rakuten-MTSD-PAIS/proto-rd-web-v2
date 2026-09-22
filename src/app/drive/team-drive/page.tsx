@@ -120,6 +120,7 @@ export default function TeamDrivePage() {
                 const item = filteredItems.find((i) => i.id === id);
                 if (item) toggleItemSelection(item);
               }}
+              onOpen={openItem}
             />
           ) : (
             <TeamDriveFileList

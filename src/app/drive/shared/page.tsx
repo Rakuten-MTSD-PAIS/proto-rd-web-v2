@@ -101,6 +101,7 @@ export default function SharedPage() {
                 const item = filteredItems.find((i) => i.id === id);
                 if (item) toggleItemSelection(item);
               }}
+              onOpen={openItem}
             />
           ) : (
             <SharedFileList

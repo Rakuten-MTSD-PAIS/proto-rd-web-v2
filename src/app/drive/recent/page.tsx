@@ -145,7 +145,7 @@ export default function RecentPage() {
               </tbody>
             </table>
           </div>
-        ) : <FileGrid items={filteredItems} selectedItemIds={selectedItemIds} onSelect={toggleItemSelection} />}
+        ) : <FileGrid items={filteredItems} selectedItemIds={selectedItemIds} onSelect={toggleItemSelection} onOpen={openItem} />}
       </div>
       {folderInfoOpen && <RightSidePanel items={selectedItems} folderInfo={recentFolders.find((folder) => folder.location.includes("Team")) ?? recentFolders[0]} onCloseFolderInfo={() => setFolderInfoOpen(false)} />}
     </section>

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { recentItems, myDriveItems, starredItems, sharedItems, teamDriveItems } from "@/lib/mock-data";
+import { recentItems, myDriveItems, starredItems, sharedItems, teamDriveItems, trashItems } from "@/lib/mock-data";
 import { FilePreview } from "@/components/drive/FilePreview";
 import type { DriveItem } from "@/lib/types";
 
@@ -9,6 +9,7 @@ const allItems: DriveItem[] = [
   ...teamDriveItems,
   ...sharedItems,
   ...starredItems,
+  ...trashItems,
 ].filter((item, index, arr) => arr.findIndex((i) => i.id === item.id) === index);
 
 export function generateStaticParams() {

@@ -62,7 +62,7 @@ export default function MyDrivePage() {
             {viewMode === "list" && <MyDriveListHeader items={filteredItems} selectedItems={selectedItems} onToggleAll={toggleAllSelection} />}
           </div>
           {viewMode === "grid"
-            ? <FileGrid items={filteredItems} selectedItemIds={selectedItems.map((i) => i.id)} onSelect={(id) => { const item = filteredItems.find((i) => i.id === id); if (item) toggleItemSelection(item); }} />
+            ? <FileGrid items={filteredItems} selectedItemIds={selectedItems.map((i) => i.id)} onSelect={(id) => { const item = filteredItems.find((i) => i.id === id); if (item) toggleItemSelection(item); }} onOpen={openItem} />
             : <MyDriveFileList items={filteredItems} selectedItems={selectedItems} onSelect={toggleItemSelection} onOpen={openItem} onInfo={(item) => { setSelectedItems([item]); setFolderInfoOpen(true); }} />
           }
         </div>

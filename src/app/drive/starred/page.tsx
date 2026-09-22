@@ -99,6 +99,7 @@ export default function StarredPage() {
                 const item = filteredItems.find((i) => i.id === id);
                 if (item) toggleItemSelection(item);
               }}
+              onOpen={openItem}
             />
           ) : (
             <StarredFileList

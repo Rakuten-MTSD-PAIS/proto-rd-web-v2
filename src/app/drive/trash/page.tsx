@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { FilterBar } from "@/components/drive/FilterBar";
 import { FileGrid } from "@/components/drive/FileGrid";
 import { FileRow } from "@/components/drive/FileRow";
@@ -16,6 +17,11 @@ import { Info, RotateCcw, Trash2, X } from "lucide-react";
 const TRASH_COLUMNS = "grid-cols-[36px_minmax(0,1fr)] lg:grid-cols-[36px_minmax(0,1fr)_176px_120px]";
 
 export default function TrashPage() {
+  const router = useRouter();
+  function openItem(item: DriveItem) {
+    if (item.type === "folder") return;
+    router.push(`/preview/${item.id}`);
+  }
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [filteredItems, setFilteredItems] = useState(trashItems);
   const [selectedItems, setSelectedItems] = useState<DriveItem[]>([]);
@@ -157,12 +163,14 @@ export default function TrashPage() {
                 const item = filteredItems.find((i) => i.id === id);
                 if (item) toggleItemSelection(item);
               }}
+              onOpen={openItem}
             />
           ) : (
             <TrashFileList
               items={filteredItems}
               selectedItems={selectedItems}
               onSelect={toggleItemSelection}
+              onOpen={openItem}
               onInfo={(item) => { setSelectedItems([item]); setFolderInfoOpen(true); }}
             />
           )}
@@ -263,11 +271,13 @@ function TrashFileList({
   items,
   selectedItems,
   onSelect,
+  onOpen,
   onInfo,
 }: {
   items: DriveItem[];
   selectedItems: DriveItem[];
   onSelect: (item: DriveItem) => void;
+  onOpen: (item: DriveItem) => void;
   onInfo: (item: DriveItem) => void;
 }) {
   const selectedIds = new Set(selectedItems.map((item) => item.id));
@@ -290,6 +300,7 @@ function TrashFileList({
               showCheckbox={selectedItems.length > 0}
               selected={selectedIds.has(item.id)}
               onSelect={() => onSelect(item)}
+              onOpen={selectedItems.length === 0 ? () => onOpen(item) : undefined}
               onInfo={() => onInfo(item)}
               gridColumns={TRASH_COLUMNS}
               showMobileMetadata
