@@ -20,13 +20,13 @@ export default async function RecentFileDetailPage({ params }: PageProps<"/drive
         <FileIcon type={item.type} size={48} thumbnail={item.thumbnail} />
         <div className="min-w-0">
           <h1 id="file-detail-heading" className="break-words text-[24px] font-semibold leading-8 text-[#18181A]">{item.name}</h1>
-          <p className="mt-1 text-[14px] leading-5 text-[#636366]">{item.location}</p>
+          <p className="mt-1 text-[14px] leading-5 text-foreground/50">{item.location}</p>
         </div>
       </div>
       <dl className="mt-8 grid grid-cols-1 gap-5 border-t border-[#E5E5EA] pt-6 sm:grid-cols-3">
-        <div><dt className="text-[13px] text-[#636366]">Modified</dt><dd className="mt-1 text-[14px] text-[#18181A]">{item.modified}</dd></div>
-        <div><dt className="text-[13px] text-[#636366]">Size</dt><dd className="mt-1 text-[14px] text-[#18181A]">{item.size}</dd></div>
-        <div><dt className="text-[13px] text-[#636366]">Owner</dt><dd className="mt-1 text-[14px] text-[#18181A]">{item.owner}</dd></div>
+        <div><dt className="text-[13px] text-foreground/50">Modified</dt><dd className="mt-1 text-[14px] text-[#18181A]">{item.modified}</dd></div>
+        <div><dt className="text-[13px] text-foreground/50">Size</dt><dd className="mt-1 text-[14px] text-[#18181A]">{item.size}</dd></div>
+        <div><dt className="text-[13px] text-foreground/50">Owner</dt><dd className="mt-1 text-[14px] text-[#18181A]">{item.owner}</dd></div>
       </dl>
     </section>
   </div>;

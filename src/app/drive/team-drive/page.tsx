@@ -1,44 +1,330 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FilterBar } from "@/components/drive/FilterBar";
-import { FileTable } from "@/components/drive/FileTable";
-import { RightSidePanel } from "@/components/drive/RightSidePanel";
 import { FolderPlusIcon } from "@/components/icons";
+import { FileGrid } from "@/components/drive/FileGrid";
+import { FileRow } from "@/components/drive/FileRow";
+import { RightSidePanel } from "@/components/drive/RightSidePanel";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { teamDriveItems } from "@/lib/mock-data";
 import type { DriveItem, ViewMode } from "@/lib/types";
+import { Copy, Download, FolderInput, Info, Link2, MessageSquare, MoreVertical, Pencil, Send, Share2, Star, Tag, Trash2, X } from "lucide-react";
 
 export default function TeamDrivePage() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [filteredItems, setFilteredItems] = useState(teamDriveItems);
   const [selectedItems, setSelectedItems] = useState<DriveItem[]>([]);
+  const [folderInfoOpen, setFolderInfoOpen] = useState(false);
+
+  function toggleItemSelection(item: DriveItem) {
+    setSelectedItems((current) =>
+      current.some((s) => s.id === item.id)
+        ? current.filter((s) => s.id !== item.id)
+        : [...current, item]
+    );
+  }
+
+  function toggleAllSelection(checked: boolean) {
+    const filteredIds = new Set(filteredItems.map((item) => item.id));
+    setSelectedItems((current) =>
+      checked
+        ? [...new Map([...current, ...filteredItems].map((item) => [item.id, item])).values()]
+        : current.filter((item) => !filteredIds.has(item.id))
+    );
+  }
 
   return (
     <div className="flex min-h-full flex-col">
-      <div className="flex items-center justify-between gap-3 px-4 pb-4 pt-5 sm:px-6">
-        <h1 id="team-drive-heading" className="min-w-0 truncate text-[24px] font-normal leading-8 text-[#636366]">Team Drive</h1>
-        <button type="button" className="flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-[8px] border border-[#E5E5EA] bg-white px-4 text-[16px] font-medium text-[#18181A] transition-colors hover:bg-[#F9F9FB]">
-          <FolderPlusIcon size={18} className="text-[#636366]" />
-          Create Team Folder
-        </button>
-      </div>
-      <div className="sticky top-0 z-20 border-b border-[#E5E5EA] bg-white px-4 pb-5 sm:px-6">
-        <FilterBar items={teamDriveItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={setViewMode} />
+      <div className="border-b border-border-subtle px-4 pb-4 pt-5 sm:px-6">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            <span className="text-title-lg font-semibold text-[#18181A]" style={{ fontFamily: "'Rakuten Sans', sans-serif" }}>
+              Team Drive
+            </span>
+            {selectedItems.length > 0 && (
+              <>
+                <span aria-hidden="true" className="text-[14px] leading-[20px] text-muted-foreground">|</span>
+                <span className="text-[14px] leading-[20px] text-muted-foreground" role="status" aria-live="polite">
+                  {selectedItems.length} {selectedItems.length === 1 ? "item" : "items"} selected
+                </span>
+              </>
+            )}
+          </div>
+          <button
+            type="button"
+            className="flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-[8px] border border-[#E1E1E6] bg-white px-3 sm:px-4 text-body-md font-medium text-[#18181A] transition-colors hover:bg-[#F9F9FB]"
+          >
+            <FolderPlusIcon size={20} className="text-foreground/50" />
+            <span className="hidden sm:inline">Create Team Folder</span>
+          </button>
+        </div>
       </div>
       <section className="flex min-w-0 flex-1">
         <div className="min-w-0 flex-1">
-          <FileTable
-            items={filteredItems}
-            showOwner
-            ownerFirst
-            teamFolders
-            stickyHeaderTop={60}
-            selectedItemIds={selectedItems.map((item) => item.id)}
-            onSelectedItemsChange={setSelectedItems}
-          />
+          <div className="sticky top-0 z-30 bg-white px-4 pt-3 sm:px-6">
+            {selectedItems.length > 0 ? (
+              <div className="flex h-10 items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedItems([])}
+                    aria-label="Cancel selection"
+                    className="flex h-10 items-center gap-2 rounded-[8px] border border-[#E1E1E6] bg-white px-3 text-[14px] font-medium text-[#18181A] transition-colors hover:bg-[#F9F9FB]"
+                  >
+                    <X size={18} strokeWidth={1.75} />
+                    <span className="hidden sm:inline">Cancel</span>
+                  </button>
+                  <SelectionActionToolbar />
+                </div>
+                <FilterBar
+                  items={teamDriveItems}
+                  viewMode={viewMode}
+                  onItemsChange={setFilteredItems}
+                  onViewModeChange={setViewMode}
+                  hidePeople
+                  hideFilters
+                  endAdornment={<InfoButton onClick={() => setFolderInfoOpen((open) => !open)} />}
+                />
+              </div>
+            ) : (
+              <FilterBar
+                items={teamDriveItems}
+                viewMode={viewMode}
+                onItemsChange={setFilteredItems}
+                onViewModeChange={setViewMode}
+                endAdornment={<InfoButton onClick={() => setFolderInfoOpen((open) => !open)} />}
+              />
+            )}
+            {viewMode === "list" && (
+              <TeamDriveListHeader
+                items={filteredItems}
+                selectedItems={selectedItems}
+                onToggleAll={toggleAllSelection}
+              />
+            )}
+          </div>
+          {viewMode === "grid" ? (
+            <FileGrid
+              items={filteredItems}
+              selectedItemIds={selectedItems.map((i) => i.id)}
+              teamFolders
+              onSelect={(id) => {
+                const item = filteredItems.find((i) => i.id === id);
+                if (item) toggleItemSelection(item);
+              }}
+            />
+          ) : (
+            <TeamDriveFileList
+              items={filteredItems}
+              selectedItems={selectedItems}
+              onSelect={toggleItemSelection}
+              onInfo={(item) => {
+                setSelectedItems([item]);
+                setFolderInfoOpen(true);
+              }}
+            />
+          )}
         </div>
-        {selectedItems.length > 0 && <RightSidePanel items={selectedItems} teamFolders />}
+        {folderInfoOpen && (
+          <RightSidePanel
+            items={selectedItems}
+            teamFolders
+            folderInfo={teamDriveItems.find((item) => item.type === "folder") ?? teamDriveItems[0]}
+            onCloseFolderInfo={() => setFolderInfoOpen(false)}
+          />
+        )}
       </section>
+    </div>
+  );
+}
+
+function InfoButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        onClick={onClick}
+        aria-label="Toggle folder information"
+        className="flex size-10 items-center justify-center rounded-[8px] border border-[#E5E5EA] bg-white text-foreground/50 transition-[background-color,transform] duration-150 hover:bg-[#F9F9FB] active:scale-[0.96] motion-reduce:transition-none"
+      >
+        <Info size={20} strokeWidth={1.75} aria-hidden="true" />
+      </TooltipTrigger>
+      <TooltipContent>Folder information</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function SelectionActionToolbar() {
+  const [moreOpen, setMoreOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (!menuRef.current?.contains(e.target as Node)) setMoreOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [moreOpen]);
+
+  const primaryActions = [
+    { label: "Download", icon: Download },
+    { label: "Share", icon: Share2 },
+    { label: "Copy link", icon: Link2, hideBelow: "md" },
+    { label: "Send files", icon: Send, hideBelow: "md" },
+    { label: "Add to starred", icon: Star, hideBelow: "xl" },
+    { label: "Move to", icon: FolderInput, hideBelow: "xl" },
+  ];
+
+  return (
+    <div ref={menuRef} className="relative flex items-center gap-0.5">
+      {primaryActions.map(({ label, icon: Icon, hideBelow }) => (
+        <button
+          key={label}
+          type="button"
+          aria-label={label}
+          className={`items-center gap-1.5 whitespace-nowrap rounded-[8px] px-2 md:px-3 text-[14px] font-medium transition-[background-color,transform] duration-150 active:scale-[0.96] motion-reduce:transition-none text-[#002896] hover:bg-[rgba(0,40,150,0.06)] h-9 ${hideBelow === "md" ? "hidden md:flex" : hideBelow === "xl" ? "hidden xl:flex" : "flex"}`}
+        >
+          <Icon size={16} strokeWidth={1.75} aria-hidden="true" />
+          <span>{label}</span>
+        </button>
+      ))}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setMoreOpen((open) => !open)}
+          aria-label="More selection actions"
+          aria-haspopup="menu"
+          aria-expanded={moreOpen}
+          className={`flex size-9 items-center justify-center rounded-[8px] text-[#002896] transition-[background-color,transform] duration-150 hover:bg-[rgba(0,40,150,0.06)] active:scale-[0.96] motion-reduce:transition-none ${moreOpen ? "bg-[rgba(0,40,150,0.06)]" : ""}`}
+        >
+          <MoreVertical size={18} strokeWidth={1.75} aria-hidden="true" />
+        </button>
+        {moreOpen && (
+          <div
+            className="absolute right-0 top-[calc(100%+8px)] z-[60] w-[220px] overflow-hidden rounded-[8px] border border-[#E1E1E6] bg-white py-1 shadow-[0_8px_24px_rgba(24,24,26,0.14)]"
+            role="menu"
+            aria-label="More selection actions"
+          >
+            {[
+              { label: "Copy link", icon: Link2, hideAbove: "md" },
+              { label: "Send files", icon: Send, hideAbove: "md" },
+              { label: "Add to starred", icon: Star, hideAbove: "xl" },
+              { label: "Move to", icon: FolderInput, hideAbove: "xl" },
+              { label: "Rename", icon: Pencil },
+              { label: "Make a copy", icon: Copy },
+              { label: "Write a comment", icon: MessageSquare },
+              { label: "Add or edit tags", icon: Tag },
+            ].map(({ label, icon: Icon, hideAbove }) => (
+              <button
+                key={label}
+                type="button"
+                role="menuitem"
+                onClick={() => setMoreOpen(false)}
+                className={`h-10 w-full items-center gap-3 px-3 text-left text-body-md text-[#18181A] hover:bg-[#F9F9FB] focus:bg-[#F9F9FB] focus:outline-none ${hideAbove === "md" ? "flex md:hidden" : hideAbove === "xl" ? "flex xl:hidden" : "flex"}`}
+              >
+                <Icon size={18} strokeWidth={1.75} className="text-foreground/50" aria-hidden="true" />
+                {label}
+              </button>
+            ))}
+            <div className="my-1 border-t border-[#E5E5EA]" />
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => setMoreOpen(false)}
+              className="flex h-10 w-full items-center gap-3 px-3 text-left text-body-md text-[#C10503] hover:bg-[#FFF5F5] focus:bg-[#FFF5F5] focus:outline-none"
+            >
+              <Trash2 size={18} strokeWidth={1.75} aria-hidden="true" />
+              Move to trash
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TeamDriveListHeader({
+  items,
+  selectedItems,
+  onToggleAll,
+}: {
+  items: DriveItem[];
+  selectedItems: DriveItem[];
+  onToggleAll: (checked: boolean) => void;
+}) {
+  const selectedIds = new Set(selectedItems.map((item) => item.id));
+  const allSelected = items.length > 0 && items.every((item) => selectedIds.has(item.id));
+  const columns = "grid-cols-[36px_minmax(0,1fr)] lg:grid-cols-[36px_minmax(0,1fr)_150px_176px_120px]";
+
+  return (
+    <div
+      className={`mt-3 -mx-4 grid h-[42px] items-center border-b border-[#F2F2F7] bg-white text-left text-[14px] font-normal leading-[20px] text-muted-foreground shadow-[0_1px_0_#E5E5EA] sm:-mx-6 ${columns}`}
+    >
+      <span className="px-3">
+        <Checkbox
+          checked={allSelected}
+          onCheckedChange={(checked) => onToggleAll(checked === true)}
+          className="border-[#C7C7CC]"
+          aria-label="Select all team folders"
+        />
+      </span>
+      <span className="px-2">Name</span>
+      <span className="hidden lg:block px-4">Owner</span>
+      <span className="hidden lg:block px-4">Modified</span>
+      <span className="hidden lg:block px-4">Size</span>
+    </div>
+  );
+}
+
+function TeamDriveFileList({
+  items,
+  selectedItems,
+  onSelect,
+  onInfo,
+}: {
+  items: DriveItem[];
+  selectedItems: DriveItem[];
+  onSelect: (item: DriveItem) => void;
+  onInfo: (item: DriveItem) => void;
+}) {
+  const selectedIds = new Set(selectedItems.map((item) => item.id));
+  const columns = "grid-cols-[36px_minmax(0,1fr)] lg:grid-cols-[36px_minmax(0,1fr)_150px_176px_120px]";
+
+  return (
+    <div className="w-full overflow-hidden">
+      <table className="block w-full border-collapse">
+        <thead className="sr-only">
+          <tr>
+            <th>Select</th>
+            <th>Name</th>
+            <th>Owner</th>
+            <th>Modified</th>
+            <th>Size</th>
+          </tr>
+        </thead>
+        <tbody className="block w-full">
+          {items.map((item) => (
+            <FileRow
+              key={item.id}
+              item={item}
+              compact
+              overlayActions
+              alwaysShowMore
+              teamFolders
+              showOwner
+              ownerFirst
+              showCheckbox={selectedItems.length > 0}
+              selected={selectedIds.has(item.id)}
+              onSelect={() => onSelect(item)}
+              onInfo={() => onInfo(item)}
+              gridColumns={columns}
+              showMobileMetadata
+            />
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

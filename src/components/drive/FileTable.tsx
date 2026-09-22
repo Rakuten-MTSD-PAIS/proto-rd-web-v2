@@ -75,17 +75,17 @@ export function FileTable({ items, showOwner = false, showLocation = false, team
                 aria-label="Select all files"
               />
             </th>
-            <th className="py-0 pl-2 pr-4 text-left text-[14px] font-normal leading-[20px] text-[#636366]">Name</th>
+            <th className="py-0 pl-2 pr-4 text-left text-[14px] font-normal leading-[20px] text-muted-foreground">Name</th>
             {showOwner && ownerFirst && (
-              <th className="hidden w-[150px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-[#636366] lg:table-cell">Owner</th>
+              <th className="hidden w-[150px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-muted-foreground lg:table-cell">Owner</th>
             )}
-            <th className="w-[160px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-[#636366]">Modified</th>
-            <th className="hidden w-[130px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-[#636366] lg:table-cell">Size</th>
+            <th className="w-[160px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-muted-foreground">Modified</th>
+            <th className="hidden w-[130px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-muted-foreground lg:table-cell">Size</th>
             {showOwner && !ownerFirst && (
-              <th className="hidden w-[150px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-[#636366] lg:table-cell">Owner</th>
+              <th className="hidden w-[150px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-muted-foreground lg:table-cell">Owner</th>
             )}
             {showLocation && (
-              <th className="hidden w-[130px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-[#636366] lg:table-cell">Location</th>
+              <th className="hidden w-[130px] px-4 py-0 text-left text-[14px] font-normal leading-[20px] text-muted-foreground lg:table-cell">Location</th>
             )}
             <th className="hidden w-[152px] sm:table-cell" />
           </tr>

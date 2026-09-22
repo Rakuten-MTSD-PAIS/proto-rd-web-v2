@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={cn("h-full", "font-sans", geist.variable)}>
+    <html lang="en" className={cn("h-full", "font-sans", geist.variable)} suppressHydrationWarning>
       <body className="h-full flex flex-col"><TooltipProvider>{children}</TooltipProvider></body>
     </html>
   );

@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="14.4" height="16" viewBox="0 0 14.4 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Trash Icon">
+<g id="trash-outline">
+<path d="M7.2 0C8.1942 0 9 0.767429 9 1.71429H14.4V2.85714H0V1.71429H5.4C5.4 0.767429 6.2058 0 7.2 0Z" fill="#18181A"/>
+<path d="M12 4V14.8571H2.4V4H1.2V14.8571C1.2 15.488 1.7376 16 2.4 16H12C12.6624 16 13.2 15.488 13.2 14.8571V4H12Z" fill="#18181A"/>
+<path d="M9 13.7143H10.2V5.14286H9V13.7143Z" fill="#18181A"/>
+<path d="M7.8 13.7143H6.6V5.14286H7.8V13.7143Z" fill="#18181A"/>
+<path d="M4.2 13.7143H5.4V5.14286H4.2V13.7143Z" fill="#18181A"/>
+</g>
+</g>
+</svg>

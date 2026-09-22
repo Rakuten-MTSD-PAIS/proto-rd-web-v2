@@ -31,8 +31,10 @@ export function FileIcon({ type, size = 32, shared = false, teamFolder = false, 
   };
 
   if (type === "folder") {
-    const folderHeight = Math.round(size * 0.875);
-    return <Image src={iconSource.folder} alt="" width={size} height={folderHeight} unoptimized className="shrink-0 object-fill" style={{ width: size, height: folderHeight }} />;
+    // List rows render folders in the design's 32 × 28 frame. Larger preview
+    // contexts retain the same aspect ratio.
+    const folderHeight = size === 32 ? 28 : Math.round(size * 0.875);
+    return <Image src={iconSource.folder} alt="" width={size} height={folderHeight} unoptimized className="shrink-0 object-contain" style={{ width: size, height: folderHeight }} />;
   }
 
   return <Image src={iconSource[type]} alt="" width={size} height={size} unoptimized className="shrink-0 object-contain" style={{ width: size, height: size }} />;

@@ -7,6 +7,8 @@ export interface DriveItem {
   modified: string;
   size: string;
   owner: string;
+  creator?: string;
+  sharedWith?: string[];
   ownerInitials?: string;
   ownerColor?: string;
   ownerAvatar?: string;

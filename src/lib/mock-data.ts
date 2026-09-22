@@ -33,7 +33,14 @@ function withMinimumItems(items: DriveItem[], minimum: number, prefix: string): 
       ? sampleMediaThumbnails[(index * 7 + prefix.length) % sampleMediaThumbnails.length]
       : item.thumbnail;
 
-    return { ...item, id: `${prefix}-${index + 1}`, name, thumbnail };
+    return {
+      ...item,
+      id: `${prefix}-${index + 1}`,
+      name,
+      thumbnail,
+      creator: item.creator ?? item.owner,
+      sharedWith: item.sharedWith ?? (item.shared ? [people[(index + 1) % people.length].owner] : []),
+    };
   });
 
   return [...expanded.filter((item) => item.type === "folder"), ...expanded.filter((item) => item.type !== "folder")];
@@ -84,7 +91,7 @@ export const recentFileGroups: { group: string; items: DriveItem[] }[] = [
 export const recentItems: DriveItem[] = recentFileGroups.flatMap((g) => g.items);
 
 export const myDriveItems: DriveItem[] = withMinimumItems([
-  { id: "d1",  name: "Claude skills: Mariam Vossough @ The Women's AI Voice — Workshop Notes, Research, and Campaign Assets", type: "folder", modified: "Sep 12, 2026, 11:20 AM", size: "–", ...ME, location: "My Drive", shared: true, starred: true },
+  { id: "d1",  name: "Claude skills: Mariam Vossough @ The Women's AI Voice — Workshop Notes, Research, and Campaign Assets", type: "folder", modified: "Sep 12, 2026, 11:20 AM", size: "–", ...ME, location: "My Drive", shared: true, sharedWith: ["Kenji Tanaka", "Aisha Patel", "Marcus Lee", "Nina Kowalski", "Chen Wei"], starred: true },
   { id: "d2",  name: "My Documents",               type: "folder", modified: "Sep 10, 2026, 9:05 AM",  size: "–",        ...ME, location: "My Drive" },
   { id: "d3",  name: "Webinar 2025",               type: "folder", modified: "Aug 28, 2026, 2:44 PM",  size: "–",        ...ME, location: "My Drive", shared: true },
   { id: "d4",  name: "Ouch_both_beyond.pptx",      type: "ppt",    modified: "Sep 14, 2026, 9:42 AM",  size: "18.4 MB",  ...ME, location: "My Drive" },
@@ -98,6 +105,7 @@ export const myDriveItems: DriveItem[] = withMinimumItems([
   { id: "d12", name: "Sunflower-field-shoot.jpg",   type: "image",  modified: "Sep 6, 2026, 8:20 AM",   size: "4.2 MB",   ...ME, thumbnail: "/media-thumbnails/sunflower-field.svg", location: "My Drive" },
   { id: "d13", name: "UI_Mockups_v4.pdf",           type: "pdf",    modified: "Aug 25, 2026, 2:15 PM",  size: "22.3 MB",  ...ME, location: "My Drive" },
   { id: "d14", name: "Logo_Final.svg",              type: "vector", modified: "Aug 10, 2026, 5:00 PM",  size: "320 KB",   ...ME, location: "My Drive" },
+  { id: "d15", name: "Meeting_Recording_Sep08.mp4", type: "video",  modified: "Sep 10, 2026, 3:00 PM", size: "320 MB",   ...ME, thumbnail: "/media-thumbnails/meeting-recording.svg", location: "My Drive" },
 ], 25, "my-drive");
 
 export const sharedItems: DriveItem[] = withMinimumItems([
@@ -116,10 +124,10 @@ export const sharedItems: DriveItem[] = withMinimumItems([
 ], 25, "shared");
 
 export const starredItems: DriveItem[] = withMinimumItems([
-  { id: "st1", name: "Q3 Report — International Growth and Customer Experience Performance Review.pdf", type: "pdf", modified: "Sep 14, 2026, 10:30 AM", size: "2.4 MB", ...ME, location: "My Drive", starred: true },
-  { id: "st2", name: "Meeting Notes",              type: "folder", modified: "Sep 12, 2026, 11:20 AM", size: "–",       ...ME,         location: "My Drive", starred: true },
+  { id: "st1", name: "Q3 Report — International Growth and Customer Experience Performance Review.pdf", type: "pdf", modified: "Sep 14, 2026, 10:30 AM", size: "2.4 MB", ...ME, location: "My Drive", starred: true, shared: true },
+  { id: "st2", name: "Meeting Notes",              type: "folder", modified: "Sep 12, 2026, 11:20 AM", size: "–",       ...ME,         location: "My Drive", starred: true, shared: true },
   { id: "st3", name: "Budget_2026.xlsx",           type: "excel",  modified: "Sep 8, 2026",            size: "512 KB",  ...ME,         location: "My Drive", starred: true },
-  { id: "st4", name: "Brand Guidelines.pdf",       type: "pdf",    modified: "Aug 30, 2026",           size: "5.8 MB",  ...person(0),  location: "Team Drive", starred: true },
+  { id: "st4", name: "Brand Guidelines.pdf",       type: "pdf",    modified: "Aug 30, 2026",           size: "5.8 MB",  ...person(0),  location: "Team Drive", starred: true, shared: true },
   { id: "st5", name: "Product Roadmap H2.pptx",   type: "ppt",    modified: "Sep 14, 2026",           size: "9.8 MB",  ...person(2),  location: "My Drive", starred: true },
 ], 25, "starred");
 
@@ -170,4 +178,5 @@ export const trashItems: DriveItem[] = withMinimumItems([
 
 export const STORAGE_USED_MB = 125.5;
 export const STORAGE_TOTAL_TB = 3;
-export const STORAGE_PERCENT = (STORAGE_USED_MB / (STORAGE_TOTAL_TB * 1024 * 1024)) * 100;
+// Kept independent of the demo labels so the sidebar meter remains visibly useful in prototypes.
+export const STORAGE_PERCENT = 40;

@@ -28,7 +28,7 @@ export function FolderCards({ folders }: FolderCardsProps) {
               <FileIcon type="folder" size={32} />
               <div className="min-w-0">
                 <p className="truncate text-[16px] font-normal leading-[20px] text-[#18181A]">{folder.name}</p>
-                <p className="mt-0.5 truncate text-[14px] leading-[20px] text-[#636366]">{folder.location}</p>
+                <p className="mt-0.5 truncate text-[14px] leading-[20px] text-muted-foreground">{folder.location}</p>
               </div>
             </div>
             <div className="ml-2 shrink-0"><MoreActionsMenu itemName={folder.name} isFolder /></div>

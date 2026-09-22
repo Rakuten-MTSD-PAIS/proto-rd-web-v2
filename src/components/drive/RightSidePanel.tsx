@@ -1,9 +1,12 @@
 "use client";
 
+import { useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { X } from "lucide-react";
 import type { DriveItem } from "@/lib/types";
 import { FileIcon } from "./FileIcon";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface RightSidePanelProps {
   items?: DriveItem[];
@@ -122,28 +125,79 @@ const moreActions: ActionItem[] = [
   { label: "Delete", icon: "/figma/selection-icons/delete.svg", iconSize: { width: 14, height: 16 } },
 ];
 
+const sharedPersonAvatars: Record<string, string> = {
+  "Yuki Sato": "/avatars/yuki-sato.svg",
+  "Kenji Tanaka": "/avatars/kenji-tanaka.svg",
+  "Aisha Patel": "/avatars/aisha-patel.svg",
+  "Marcus Lee": "/avatars/marcus-lee.svg",
+  "Nina Kowalski": "/avatars/nina-kowalski.svg",
+  "Chen Wei": "/avatars/chen-wei.svg",
+  "Olivia Brown": "/avatars/olivia-brown.svg",
+  "James Wilson": "/avatars/james-wilson.svg",
+  "Anita Desai": "/avatars/anita-desai.svg",
+  "Kiran Pingle": "/avatars/kiran-pingle.svg",
+};
+
+function PersonInfo({ name, avatar, initials, color }: { name: string; avatar?: string; initials?: string; color?: string }) {
+  const fallbackInitials = initials ?? name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+  return <div className="flex min-w-0 items-center gap-2"><span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#636366] text-[10px] font-semibold text-white" style={{ backgroundColor: color }}>{avatar ? <Image src={avatar} alt="" width={28} height={28} unoptimized className="size-full object-cover" /> : fallbackInitials}</span><span className="truncate text-body-md text-[#303039]">{name}</span></div>;
+}
+
+function SharedWithList({ people }: { people: string[] }) {
+  const [showAll, setShowAll] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const visiblePeople = showAll ? people : people.slice(0, 3);
+  const remainingCount = people.length - visiblePeople.length;
+
+  function showRemainingPeople() {
+    setIsLoading(true);
+    window.setTimeout(() => {
+      setShowAll(true);
+      setIsLoading(false);
+    }, 500);
+  }
+
+  return <section className="mt-7" aria-busy={isLoading}><div className="flex items-center justify-between gap-2"><h3 className="text-caption text-muted-foreground">Shared with</h3>{people.length > 3 && <button type="button" onClick={showAll ? () => setShowAll(false) : showRemainingPeople} disabled={isLoading} className="text-caption text-[#002896] hover:underline disabled:cursor-wait disabled:opacity-70">{showAll ? "View less" : "View all"}</button>}</div><div className="mt-1 flex flex-col gap-2">{visiblePeople.map((person) => <PersonInfo key={person} name={person} avatar={sharedPersonAvatars[person]} />)}{isLoading && Array.from({ length: remainingCount }, (_, index) => <div key={index} className="flex items-center gap-2" aria-hidden="true"><Skeleton className="size-7 rounded-full" /><Skeleton className="h-4 w-28" /></div>)}</div></section>;
+}
+
 export function RightSidePanel({ items = [], teamFolders = false, showActions = true, folderInfo, onCloseFolderInfo }: RightSidePanelProps) {
+  const infoContentRef = useRef<HTMLDivElement>(null);
+
+  function scrollInfoPanel(event: React.WheelEvent<HTMLElement>) {
+    const content = infoContentRef.current;
+    if (!content) return;
+    event.preventDefault();
+    event.stopPropagation();
+    content.scrollBy({ top: event.deltaY, behavior: "smooth" });
+  }
+
   if (folderInfo) {
-    const isShared = folderInfo.location.includes("Team");
     const previewItem = items[0];
     const isMultiSelection = items.length > 1;
+    const locationName = previewItem?.location ?? folderInfo.location.replace(/^in /, "");
+    const parentFolderHref = locationName === "Team Drive" ? "/drive/team-drive" : "/drive/my-drive";
     if (!previewItem) {
-      return <aside className="sticky top-0 hidden h-[calc(100dvh-60px)] w-[240px] shrink-0 self-start border-l border-[#F2F2F7] bg-white px-4 py-3 xl:flex xl:flex-col" aria-labelledby="folder-info-title">
-        <div className="flex items-center justify-between"><h2 id="folder-info-title" className="text-[16px] font-semibold leading-6 text-[#18181A]">Folder information</h2><button type="button" onClick={onCloseFolderInfo} className="flex size-8 items-center justify-center rounded-[6px] text-[#636366] hover:bg-[#F2F2F7] hover:text-[#18181A]" aria-label="Close folder information"><X size={18} strokeWidth={1.75} aria-hidden="true" /></button></div>
-        <div className="mt-5 flex min-h-[144px] items-center justify-center border-b border-[#E5E5EA] px-4"><p className="max-w-40 text-center text-[14px] leading-5 text-[#636366]">Select an item to see details</p></div>
+      return <aside className="fixed top-[60px] bottom-0 right-0 z-50 flex w-full sm:max-w-[360px] flex-col border-l border-[#F2F2F7] bg-white px-4 py-3 shadow-[-8px_0_24px_rgba(24,24,26,0.12)] xl:sticky xl:top-0 xl:bottom-auto xl:z-auto xl:h-[calc(100dvh-60px)] xl:w-[240px] xl:max-w-none xl:shrink-0 xl:self-start xl:shadow-none" aria-label="File information">
+        <div className="flex justify-end"><button type="button" onClick={onCloseFolderInfo} className="flex size-8 items-center justify-center rounded-[6px] text-foreground/50 hover:bg-[#F2F2F7] hover:text-[#18181A]" aria-label="Close file information"><X size={18} strokeWidth={1.75} aria-hidden="true" /></button></div>
+        <p className="mt-5 px-4 text-center text-[14px] leading-5 text-muted-foreground">No Item selected</p>
       </aside>;
     }
-    return <aside className="sticky top-0 hidden h-[calc(100dvh-60px)] w-[240px] shrink-0 self-start overflow-y-auto border-l border-[#F2F2F7] bg-white px-4 py-3 xl:flex xl:flex-col" aria-labelledby="folder-info-title">
-      <div className="flex items-center justify-between"><h2 id="folder-info-title" className="text-[16px] font-semibold leading-6 text-[#18181A]">Folder information</h2><button type="button" onClick={onCloseFolderInfo} className="flex size-8 items-center justify-center rounded-[6px] text-[#636366] hover:bg-[#F2F2F7] hover:text-[#18181A]" aria-label="Close folder information"><X size={18} strokeWidth={1.75} aria-hidden="true" /></button></div>
-      <div className="flex flex-col items-center border-b border-[#E5E5EA] px-3 py-6 text-center">
+    const isFolder = previewItem.type === "folder" && !isMultiSelection;
+    const isTeamFolder = isFolder && previewItem.location === "Team Drive";
+    const isSharedFolder = isFolder && Boolean(previewItem.shared);
+    const folderType = isTeamFolder ? "Team folder" : isSharedFolder ? "Shared folder" : "Personal folder";
+    const infoTitle = isFolder ? "Folder information" : "File info";
+    return <aside onWheel={scrollInfoPanel} className="fixed top-[60px] bottom-0 right-0 z-50 flex w-full sm:max-w-[360px] flex-col overflow-hidden border-l border-[#F2F2F7] bg-white py-3 shadow-[-8px_0_24px_rgba(24,24,26,0.12)] xl:sticky xl:top-0 xl:bottom-auto xl:z-auto xl:h-[calc(100dvh-60px)] xl:w-[240px] xl:max-w-none xl:shrink-0 xl:self-start xl:shadow-none" aria-labelledby="folder-info-title">
+      <div className="z-10 -mt-3 flex shrink-0 items-center justify-between border-b border-[#E5E5EA] bg-white px-4 py-3"><h2 id="folder-info-title" className="text-body-lg font-semibold text-[#18181A]">{infoTitle}</h2><button type="button" onClick={onCloseFolderInfo} className="flex size-8 items-center justify-center rounded-[6px] text-foreground/50 hover:bg-[#F2F2F7] hover:text-[#18181A]" aria-label={`Close ${infoTitle.toLowerCase()}`}><X size={18} strokeWidth={1.75} aria-hidden="true" /></button></div>
+      <div ref={infoContentRef} tabIndex={0} aria-label={`${infoTitle} details`} className="min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-smooth px-4">
+        <div className="flex justify-center pt-7">
         <div className="relative flex h-[60px] w-[60px] items-center justify-center">
-          {isMultiSelection ? <><span className="absolute top-2 h-6 w-14 rounded-[6px] border border-[#E5E5EA] bg-white" /><span className="absolute bottom-1 h-6 w-14 rounded-[6px] border border-[#E5E5EA] bg-white" /></> : previewItem ? <FileIcon type={previewItem.type} size={40} shared={previewItem.shared} teamFolder={previewItem.type === "folder"} thumbnail={previewItem.thumbnail} /> : <FileIcon type="folder" size={40} teamFolder={isShared} />}
+          {isMultiSelection ? <><span className="absolute top-2 h-6 w-14 rounded-[6px] border border-[#E5E5EA] bg-white" /><span className="absolute bottom-1 h-6 w-14 rounded-[6px] border border-[#E5E5EA] bg-white" /></> : <FileIcon type={previewItem.type} size={48} shared={isSharedFolder} teamFolder={isTeamFolder} thumbnail={previewItem.thumbnail} />}
         </div>
-        <p className="mt-2 w-full break-words text-[14px] font-semibold leading-5 text-[#18181A]">{isMultiSelection ? `${items.length} selected` : previewItem?.name ?? folderInfo.name}</p>
-        <p className="mt-1 text-[13px] leading-5 text-[#636366]">{isMultiSelection ? "Multiple items" : previewItem?.size ?? "Folder"}</p>
+        </div>
+      {!isMultiSelection && <><dl className="mt-7 grid gap-7"><div><dt className="text-caption text-muted-foreground">{isFolder ? "Folder name" : "File name"}</dt><dd className="mt-1 text-body-md text-[#303039] break-words">{previewItem.name}</dd></div><div><dt className="text-caption text-muted-foreground">{isFolder ? "Folder type" : "File type"}</dt><dd className="mt-1 text-body-md text-[#303039]">{isFolder ? folderType : previewItem.type.toUpperCase()}</dd></div><div><dt className="text-caption text-muted-foreground">Location</dt><dd className="mt-1 text-body-md"><Link href={parentFolderHref} className="text-[#002896] hover:underline">{locationName}</Link></dd></div><div><dt className="text-caption text-muted-foreground">Owner</dt><dd className="mt-1"><PersonInfo name={previewItem.owner} avatar={previewItem.ownerAvatar} initials={previewItem.ownerInitials} color={previewItem.ownerColor} /></dd></div><div><dt className="text-caption text-muted-foreground">Created</dt><dd className="mt-1 text-body-md text-[#303039]">2025.02.26</dd></div></dl>
+      {isSharedFolder && previewItem.sharedWith && previewItem.sharedWith.length > 0 && <SharedWithList people={previewItem.sharedWith} />}</>}
       </div>
-      {!isMultiSelection && <><dl className="mt-7 grid gap-7"><div><dt className="text-[13px] leading-5 text-[#636366]">Folder name</dt><dd className="mt-1 text-[16px] leading-6 text-[#303039] break-words">{folderInfo.name}</dd></div><div><dt className="text-[13px] leading-5 text-[#636366]">Folder type</dt><dd className="mt-1 text-[16px] leading-6 text-[#303039]">{isShared ? "Shared folder" : "Personal folder"}</dd></div><div><dt className="text-[13px] leading-5 text-[#636366]">Owner</dt><dd className="mt-1 text-[16px] leading-6 text-[#303039]">Kiran Pingle</dd></div><div><dt className="text-[13px] leading-5 text-[#636366]">Created</dt><dd className="mt-1 text-[16px] leading-6 text-[#303039]">2025.02.26</dd></div></dl>
-      {isShared && <div className="mt-auto border-t border-[#E5E5EA] pt-5"><h3 className="text-[16px] font-semibold leading-6 text-[#18181A]">Shared with</h3><div className="mt-4 flex gap-2"><span className="flex size-10 items-center justify-center rounded-full bg-[#FFF7D7] text-[14px] font-semibold text-[#F7B500]">A</span><span className="flex size-10 items-center justify-center rounded-full bg-[#FFF0F6] text-[14px] font-semibold text-[#EE5C91]">K</span></div></div>}</>}
     </aside>;
   }
 
@@ -159,7 +213,7 @@ export function RightSidePanel({ items = [], teamFolders = false, showActions = 
   if (!item) return null;
 
   return (
-    <aside className="sticky top-0 hidden h-[calc(100dvh-60px)] w-[240px] shrink-0 self-start overflow-y-auto border-l border-[#F2F2F7] bg-white px-1 py-3 xl:flex xl:flex-col" aria-label="Selected file details">
+    <aside className="sticky top-[60px] hidden h-[calc(100dvh-60px)] w-[240px] shrink-0 self-start overflow-y-auto border-l border-[#F2F2F7] bg-white px-1 py-3 xl:flex xl:flex-col" aria-label="Selected file details">
       <div className="flex flex-col items-center px-3">
         {/* File icon + name */}
         <div className="flex w-full flex-col items-center overflow-hidden bg-white p-6">
@@ -173,14 +227,14 @@ export function RightSidePanel({ items = [], teamFolders = false, showActions = 
               ) : item.type === "ppt" ? (
                 <Image src="/figma/selection-icons/file-ppt.svg" alt="" aria-hidden="true" width={35.556} height={40} unoptimized />
               ) : (
-                <FileIcon type={item.type} size={40} shared={item.shared} teamFolder={teamFolders && item.type === "folder"} thumbnail={item.thumbnail} />
+                <FileIcon type={item.type} size={48} shared={item.shared} teamFolder={teamFolders && item.type === "folder"} thumbnail={item.thumbnail} />
               )}
             </div>
             <div className="flex w-full flex-col items-center gap-1 text-center text-[12px] leading-[16px]">
               <p className="w-full break-words font-semibold text-[#18181A]" style={{ fontFamily: "'Rakuten Sans UI', 'Rakuten_Sans_UI', sans-serif" }}>
                 {isMultiSelection ? `${items.length} selected` : item.name}
               </p>
-              <p className="w-full text-[#636366]" style={{ fontFamily: "'Rakuten Sans UI', 'Rakuten_Sans_UI', sans-serif" }}>
+              <p className="w-full text-muted-foreground" style={{ fontFamily: "'Rakuten Sans UI', 'Rakuten_Sans_UI', sans-serif" }}>
                 {item.size}
               </p>
             </div>
