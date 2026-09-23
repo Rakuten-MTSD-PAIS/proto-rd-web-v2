@@ -9,18 +9,20 @@ import { FileRow } from "@/components/drive/FileRow";
 import { RightSidePanel } from "@/components/drive/RightSidePanel";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { myDriveItems } from "@/lib/mock-data";
+import { myDriveItems, myDriveFolders } from "@/lib/mock-data";
 import type { DriveItem, ViewMode } from "@/lib/types";
 import { Copy, Download, FolderInput, Info, Link2, MessageSquare, MoreVertical, Pencil, Send, Share2, Star, Tag, Trash2, X } from "lucide-react";
+
+const myDriveAllItems = [...myDriveFolders, ...myDriveItems.filter(i => i.type !== "folder")];
 
 export default function MyDrivePage() {
   const router = useRouter();
   function openItem(item: DriveItem) {
-    if (item.type === "folder") { router.push("/drive/my-drive"); return; }
+    if (item.type === "folder") { router.push(`/drive/folder/${item.id}`); return; }
     router.push(`/preview/${item.id}`);
   }
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [filteredItems, setFilteredItems] = useState(myDriveItems);
+  const [filteredItems, setFilteredItems] = useState(myDriveAllItems);
   const [selectedItems, setSelectedItems] = useState<DriveItem[]>([]);
   const [folderInfoOpen, setFolderInfoOpen] = useState(false);
 
@@ -54,10 +56,10 @@ export default function MyDrivePage() {
                   </button>
                   <SelectionActionToolbar />
                 </div>
-                <FilterBar items={myDriveItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={setViewMode} hidePeople hideFilters endAdornment={<InfoButton onClick={() => setFolderInfoOpen((open) => !open)} />} />
+                <FilterBar items={myDriveAllItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={setViewMode} hidePeople hideFilters endAdornment={<InfoButton onClick={() => setFolderInfoOpen((open) => !open)} />} />
               </div>
             ) : (
-              <FilterBar items={myDriveItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={setViewMode} hidePeople endAdornment={<InfoButton onClick={() => setFolderInfoOpen((open) => !open)} />} />
+              <FilterBar items={myDriveAllItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={setViewMode} hidePeople endAdornment={<InfoButton onClick={() => setFolderInfoOpen((open) => !open)} />} />
             )}
             {viewMode === "list" && <MyDriveListHeader items={filteredItems} selectedItems={selectedItems} onToggleAll={toggleAllSelection} />}
           </div>
@@ -66,7 +68,7 @@ export default function MyDrivePage() {
             : <MyDriveFileList items={filteredItems} selectedItems={selectedItems} onSelect={toggleItemSelection} onOpen={openItem} onInfo={(item) => { setSelectedItems([item]); setFolderInfoOpen(true); }} />
           }
         </div>
-        {folderInfoOpen && <RightSidePanel items={selectedItems} folderInfo={myDriveItems.find((item) => item.type === "folder") ?? myDriveItems[0]} onCloseFolderInfo={() => setFolderInfoOpen(false)} />}
+        {folderInfoOpen && <RightSidePanel items={selectedItems} folderInfo={myDriveAllItems.find((item) => item.type === "folder") ?? myDriveAllItems[0]} onCloseFolderInfo={() => setFolderInfoOpen(false)} />}
       </section>
     </div>
   );

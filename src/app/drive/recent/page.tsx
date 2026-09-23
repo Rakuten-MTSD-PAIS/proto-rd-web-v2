@@ -47,7 +47,7 @@ export default function RecentPage() {
 
   function openItem(item: DriveItem) {
     if (item.type === "folder") {
-      router.push(item.location === "Team Drive" ? "/drive/team-drive" : "/drive/my-drive");
+      router.push(`/drive/folder/${item.id}`);
       return;
     }
     router.push(`/preview/${item.id}`);

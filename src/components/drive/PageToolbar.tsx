@@ -4,6 +4,31 @@ import { useState } from "react";
 import { FileUp, FolderUp } from "lucide-react";
 import { FolderPlusIcon, ChevronDownIcon } from "@/components/icons";
 
+export function UploadButton({ size = 20 }: { size?: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className="flex h-10 items-center gap-2 rounded-[8px] border border-[#E1E1E6] bg-white px-4 text-body-md font-medium text-[#18181A] transition-colors hover:bg-[#F9F9FB]"
+      >
+        <FileUp size={size} strokeWidth={1.75} className="text-foreground/50" />
+        Upload
+        <ChevronDownIcon size={16} className={`ml-1 text-foreground/50 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-[calc(100%+8px)] z-[60] w-[196px] rounded-[8px] border border-[#E1E1E6] bg-white py-1 shadow-[0_6px_16px_rgba(24,24,26,0.14)]" role="menu" aria-label="Upload options">
+          <button type="button" role="menuitem" onClick={() => setOpen(false)} className="flex w-full items-center gap-3 px-4 py-3 text-left text-body-md text-[#18181A] hover:bg-[#F9F9FB]"><FileUp size={20} strokeWidth={1.75} className="text-foreground/50" />Upload file</button>
+          <button type="button" role="menuitem" onClick={() => setOpen(false)} className="flex w-full items-center gap-3 px-4 py-3 text-left text-body-md text-[#18181A] hover:bg-[#F9F9FB]"><FolderUp size={20} strokeWidth={1.75} className="text-foreground/50" />Upload folder</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface BreadcrumbItem {
   label: string;
   href?: string;
@@ -16,7 +41,6 @@ interface PageToolbarProps {
 }
 
 export function PageToolbar({ breadcrumbs, showActions = true, selectionCount }: PageToolbarProps) {
-  const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
 
   return (
     <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
@@ -48,25 +72,7 @@ export function PageToolbar({ breadcrumbs, showActions = true, selectionCount }:
             <FolderPlusIcon size={20} className="text-foreground/50" />
             <span className="hidden sm:inline">Create Folder</span>
           </button>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setUploadMenuOpen((open) => !open)}
-              aria-expanded={uploadMenuOpen}
-              aria-haspopup="menu"
-              className="flex h-10 items-center gap-2 rounded-[8px] border border-[#E1E1E6] bg-white px-4 text-body-md font-medium text-[#18181A] transition-colors hover:bg-[#F9F9FB]"
-            >
-              <FileUp size={20} strokeWidth={1.75} className="text-foreground/50" />
-              Upload
-              <ChevronDownIcon size={16} className={`ml-1 text-foreground/50 transition-transform ${uploadMenuOpen ? "rotate-180" : ""}`} />
-            </button>
-            {uploadMenuOpen && (
-              <div className="absolute right-0 top-[calc(100%+8px)] z-[60] w-[196px] rounded-[8px] border border-[#E1E1E6] bg-white py-1 shadow-[0_6px_16px_rgba(24,24,26,0.14)]" role="menu" aria-label="Upload options">
-                <button type="button" role="menuitem" className="flex w-full items-center gap-3 px-4 py-3 text-left text-body-md text-[#18181A] hover:bg-[#F9F9FB]"><FileUp size={20} strokeWidth={1.75} className="text-foreground/50" />Upload file</button>
-                <button type="button" role="menuitem" className="flex w-full items-center gap-3 px-4 py-3 text-left text-body-md text-[#18181A] hover:bg-[#F9F9FB]"><FolderUp size={20} strokeWidth={1.75} className="text-foreground/50" />Upload folder</button>
-              </div>
-            )}
-          </div>
+          <UploadButton />
         </div>
       )}
     </div>

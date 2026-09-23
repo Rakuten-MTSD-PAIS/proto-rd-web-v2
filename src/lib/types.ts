@@ -16,6 +16,7 @@ export interface DriveItem {
   location: string;
   starred?: boolean;
   shared?: boolean;
+  parentId?: string;
 }
 
 export type ViewMode = "list" | "grid";

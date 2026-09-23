@@ -1,11 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { Download, Info, RotateCcw, Star, StarOff, Trash2 } from "lucide-react";
+import { Fragment, useState } from "react";
+import { Download, Info, Link2, RotateCcw, Star, StarOff, Trash2 } from "lucide-react";
 import type { DriveItem } from "@/lib/types";
 import { ShareIcon } from "@/components/icons";
 import { FileIcon } from "./FileIcon";
 import { MoreActionsMenu, ShareActionIcon } from "./MoreActionsMenu";
+import { CopyLinkModal } from "./CopyLinkModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -60,6 +62,8 @@ function OwnerAvatar({ item }: { item: DriveItem }) {
 }
 
 export function FileRow({ item, showOwner = false, showLocation = false, teamFolders = false, ownerFirst = false, compact = false, metadataBreakpoint = "lg", hideActions = false, overlayActions = false, alwaysShowMore = false, trashMode = false, alignMetadataEnd = false, showCheckbox = false, showMobileMetadata = false, selected = false, onSelect, onOpen, onInfo, selectOnMetadata = false, gridColumns }: FileRowProps) {
+  const [copyLinkOpen, setCopyLinkOpen] = useState(false);
+
   function handleRowKeyDown(event: React.KeyboardEvent<HTMLTableRowElement>) {
     if (!selectOnMetadata || event.currentTarget !== event.target || (event.key !== "Enter" && event.key !== " ")) return;
     event.preventDefault();
@@ -76,6 +80,7 @@ export function FileRow({ item, showOwner = false, showLocation = false, teamFol
   const compactMetadataVisibility = metadataBreakpoint === "always" ? "" : metadataBreakpoint === "2xl" ? `hidden 2xl:${displayUnit}` : metadataBreakpoint === "xl" ? `hidden xl:${displayUnit}` : `hidden lg:${displayUnit}`;
 
   return (
+    <Fragment>
     <tr aria-selected={selected} tabIndex={selectOnMetadata ? 0 : undefined} onClick={selectOnMetadata ? onSelect : undefined} onKeyDown={handleRowKeyDown} className={`group border-b border-[#E5E5EA] transition-colors duration-150 ease-out hover:z-10 hover:bg-[#F9F9FB] focus-within:z-20 motion-reduce:transition-none ${gridColumns ? `relative grid w-full ${gridColumns}` : ""} ${selectOnMetadata ? "cursor-pointer" : ""} ${selected ? "bg-[#E9EEF6] hover:bg-[#E9EEF6]" : ""}`} style={{ minHeight: 64, fontFamily: "'Rakuten Sans UI', sans-serif" }}>
       {/* Checkbox — hidden, shown on hover */}
       <td className={`w-9 pl-3 pr-0 ${gridColumns ? "flex items-center" : ""}`}>
@@ -151,6 +156,9 @@ export function FileRow({ item, showOwner = false, showLocation = false, teamFol
               <Tooltip><TooltipTrigger className="flex size-8 items-center justify-center rounded-[6px] text-foreground transition-colors duration-150 hover:bg-[#E5E5EA] motion-reduce:transition-none" aria-label={`Share ${item.name}`}>
                 <ShareActionIcon />
               </TooltipTrigger><TooltipContent>Share</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger onClick={() => setCopyLinkOpen(true)} className="flex size-8 items-center justify-center rounded-[6px] text-foreground transition-colors duration-150 hover:bg-[#E5E5EA] motion-reduce:transition-none" aria-label={`Copy link for ${item.name}`}>
+                <Link2 size={17} strokeWidth={1.75} aria-hidden="true" />
+              </TooltipTrigger><TooltipContent>Copy link</TooltipContent></Tooltip>
               {onInfo && <Tooltip><TooltipTrigger onClick={onInfo} className="flex size-8 items-center justify-center rounded-[6px] text-foreground transition-colors duration-150 hover:bg-[#E5E5EA] motion-reduce:transition-none" aria-label={`View information for ${item.name}`}><Info size={17} strokeWidth={1.75} aria-hidden="true" /></TooltipTrigger><TooltipContent>View information</TooltipContent></Tooltip>}
               <Tooltip><TooltipTrigger className="flex size-8 items-center justify-center rounded-[6px] text-foreground transition-colors duration-150 hover:bg-[#E5E5EA] motion-reduce:transition-none" aria-label={`${item.starred ? "Remove" : "Add"} ${item.name} ${item.starred ? "from" : "to"} starred`}>
                 {item.starred ? <StarOff size={17} strokeWidth={1.75} aria-hidden="true" /> : <Star size={17} strokeWidth={1.75} aria-hidden="true" />}
@@ -165,5 +173,7 @@ export function FileRow({ item, showOwner = false, showLocation = false, teamFol
         </div>
       </td>}
     </tr>
+    {copyLinkOpen && <CopyLinkModal itemName={item.name} onClose={() => setCopyLinkOpen(false)} />}
+    </Fragment>
   );
 }

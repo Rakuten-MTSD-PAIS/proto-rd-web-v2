@@ -63,7 +63,18 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose, onSend
 
   const iconOnly = collapsed || (isMdLg && !mobileOpen);
   const isSearching = searchParams.get("search") != null && searchParams.get("search") !== "";
-  const isActive = (href: string) => !isSearching && pathname.startsWith(href);
+  const folderSegment = pathname.startsWith("/drive/folder/") ? pathname.split("/drive/folder/")[1]?.replace(/\/$/, "") : null;
+  const isTeamFolder = folderSegment ? folderSegment.startsWith("td-") : false;
+
+  const isActive = (href: string) => {
+    if (isSearching) return false;
+    if (pathname.startsWith(href)) return true;
+    if (pathname.startsWith("/drive/folder/")) {
+      if (href === "/drive/team-drive" && isTeamFolder) return true;
+      if (href === "/drive/my-drive" && !isTeamFolder) return true;
+    }
+    return false;
+  };
 
   return (
     <aside

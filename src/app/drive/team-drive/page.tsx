@@ -16,7 +16,7 @@ import { Copy, Download, FolderInput, Info, Link2, MessageSquare, MoreVertical, 
 export default function TeamDrivePage() {
   const router = useRouter();
   function openItem(item: DriveItem) {
-    if (item.type === "folder") { router.push("/drive/team-drive"); return; }
+    if (item.type === "folder") { router.push(`/drive/folder/${item.id}`); return; }
     router.push(`/preview/${item.id}`);
   }
   const [viewMode, setViewMode] = useState<ViewMode>("list");

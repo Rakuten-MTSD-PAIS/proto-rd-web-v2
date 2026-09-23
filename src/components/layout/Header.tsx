@@ -93,7 +93,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className={`sticky top-0 ${searchOpen ? "z-[999]" : "z-50"} flex h-[60px] shrink-0 items-center gap-3 bg-[#F2F2F7] px-1 sm:gap-4`}>
+    <header className={`sticky top-0 ${searchOpen ? "z-[999]" : "z-50"} flex h-[60px] shrink-0 items-center gap-3 bg-[#F2F2F7] px-3 sm:gap-4`}>
       <button
         type="button"
         onClick={onMenuClick}

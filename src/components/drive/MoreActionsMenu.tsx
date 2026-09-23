@@ -66,7 +66,7 @@ export function MoreActionsMenu({ itemName, isFolder = false, onInfo, starred = 
     <div ref={menuRef} className="relative">
       <Tooltip><TooltipTrigger
         type="button"
-        className={`flex size-8 items-center justify-center rounded-[6px] text-foreground transition-colors duration-150 bg-white group-hover:bg-[#F9F9FB] hover:bg-[#E5E5EA] motion-reduce:transition-none ${open ? "bg-[#E5E5EA]" : ""}`}
+        className={`flex size-8 items-center justify-center rounded-[6px] text-foreground transition-[colors,transform] duration-150 bg-white group-hover:bg-[#F9F9FB] hover:bg-[#E5E5EA] active:scale-[0.96] motion-reduce:transition-none ${open ? "bg-[#E5E5EA]" : ""}`}
         aria-label={`More actions for ${itemName}`}
         aria-haspopup="menu"
         aria-expanded={open}
@@ -79,7 +79,7 @@ export function MoreActionsMenu({ itemName, isFolder = false, onInfo, starred = 
       </TooltipTrigger><TooltipContent>More actions</TooltipContent></Tooltip>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%+6px)] z-[60] w-[220px] overflow-hidden rounded-[8px] border border-[#E1E1E6] bg-white py-1 shadow-[0_8px_24px_rgba(24,24,26,0.14)]" role="menu" aria-label={`Actions for ${itemName}`}>
+        <div className="animate-in fade-in zoom-in-95 duration-100 absolute right-0 top-[calc(100%+6px)] z-[60] w-[220px] overflow-hidden rounded-[8px] border border-[#E1E1E6] bg-white py-1 shadow-[0_8px_24px_rgba(24,24,26,0.14)]" role="menu" aria-label={`Actions for ${itemName}`}>
 
           {alwaysVisible ? (
             /* ── Always-visible mode ── */

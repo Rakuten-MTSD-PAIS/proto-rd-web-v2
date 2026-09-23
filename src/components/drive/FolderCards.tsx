@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { MoreActionsMenu } from "./MoreActionsMenu";
 import { FileIcon } from "./FileIcon";
 
@@ -14,6 +15,7 @@ interface FolderCardsProps {
 }
 
 export function FolderCards({ folders }: FolderCardsProps) {
+  const router = useRouter();
   if (folders.length === 0) return null;
 
   return (
@@ -21,7 +23,8 @@ export function FolderCards({ folders }: FolderCardsProps) {
       {folders.map((folder) => (
         <article
           key={folder.id}
-          className="group flex min-h-[68px] min-w-0 items-center rounded-[8px] border border-[#E5E5EA] bg-white transition-colors hover:bg-[#F9F9FB]"
+          className="group flex min-h-[68px] min-w-0 items-center rounded-[8px] border border-[#E5E5EA] bg-white transition-colors hover:bg-[#F9F9FB] cursor-pointer"
+          onClick={() => router.push(`/drive/folder/${folder.id}`)}
         >
           <div className="flex w-full items-center justify-between px-4">
             <div className="flex min-w-0 items-center gap-3">
@@ -31,7 +34,9 @@ export function FolderCards({ folders }: FolderCardsProps) {
                 <p className="mt-0.5 truncate text-[14px] leading-[20px] text-muted-foreground">{folder.location}</p>
               </div>
             </div>
-            <div className="ml-2 shrink-0"><MoreActionsMenu itemName={folder.name} isFolder /></div>
+            <div className="ml-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+              <MoreActionsMenu itemName={folder.name} isFolder />
+            </div>
           </div>
         </article>
       ))}
