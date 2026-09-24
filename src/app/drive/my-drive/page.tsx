@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useViewMode } from "@/hooks/useViewMode";
 import { useRouter } from "next/navigation";
 import { PageToolbar } from "@/components/drive/PageToolbar";
 import { FilterBar } from "@/components/drive/FilterBar";
@@ -12,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { myDriveItems, myDriveFolders } from "@/lib/mock-data";
 import type { DriveItem, ViewMode } from "@/lib/types";
 import { Copy, Download, FolderInput, Info, Link2, MessageSquare, MoreVertical, Pencil, Send, Share2, Star, Tag, Trash2, X } from "lucide-react";
+import { useSendFilesDialog } from "@/components/drive/SendFilesModal";
 
 const myDriveAllItems = [...myDriveFolders, ...myDriveItems.filter(i => i.type !== "folder")];
 
@@ -21,7 +23,7 @@ export default function MyDrivePage() {
     if (item.type === "folder") { router.push(`/drive/folder/${item.id}`); return; }
     router.push(`/preview/${item.id}`);
   }
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [viewMode, handleViewModeChange] = useViewMode();
   const [filteredItems, setFilteredItems] = useState(myDriveAllItems);
   const [selectedItems, setSelectedItems] = useState<DriveItem[]>([]);
   const [folderInfoOpen, setFolderInfoOpen] = useState(false);
@@ -45,30 +47,30 @@ export default function MyDrivePage() {
         <PageToolbar breadcrumbs={[{ label: "My Drive" }]} selectionCount={selectedItems.length} />
       </div>
       <section className="flex min-w-0 flex-1">
-        <div className="min-w-0 flex-1">
-          <div className="sticky top-0 z-30 bg-white px-4 pt-3 sm:px-6">
-            {selectedItems.length > 0 ? (
-              <div className="flex h-10 items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <button type="button" onClick={() => setSelectedItems([])} aria-label="Cancel selection" className="flex h-10 items-center gap-2 rounded-[8px] border border-[#E1E1E6] bg-white px-3 text-[14px] font-medium text-[#18181A] transition-colors hover:bg-[#F9F9FB]">
-                    <X size={18} strokeWidth={1.75} />
-                    <span className="hidden sm:inline">Cancel</span>
-                  </button>
-                  <SelectionActionToolbar />
+          <div className="min-w-0 flex-1">
+            <div className="sticky top-0 z-30 bg-white px-4 pt-3 sm:px-6">
+              {selectedItems.length > 0 ? (
+                <div className="flex h-10 items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <button type="button" onClick={() => setSelectedItems([])} aria-label="Cancel selection" className="flex h-10 items-center gap-2 rounded-[8px] border border-[#E1E1E6] bg-white px-3 text-[14px] font-medium text-[#18181A] transition-colors hover:bg-[#F9F9FB]">
+                      <X size={18} strokeWidth={1.75} />
+                      <span className="hidden sm:inline">Cancel</span>
+                    </button>
+                    <SelectionActionToolbar selectedItems={selectedItems} />
+                  </div>
+                  <FilterBar items={myDriveAllItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={handleViewModeChange} hidePeople hideFilters endAdornment={<InfoButton onClick={() => setFolderInfoOpen((open) => !open)} />} />
                 </div>
-                <FilterBar items={myDriveAllItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={setViewMode} hidePeople hideFilters endAdornment={<InfoButton onClick={() => setFolderInfoOpen((open) => !open)} />} />
-              </div>
-            ) : (
-              <FilterBar items={myDriveAllItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={setViewMode} hidePeople endAdornment={<InfoButton onClick={() => setFolderInfoOpen((open) => !open)} />} />
-            )}
-            {viewMode === "list" && <MyDriveListHeader items={filteredItems} selectedItems={selectedItems} onToggleAll={toggleAllSelection} />}
+              ) : (
+                <FilterBar items={myDriveAllItems} viewMode={viewMode} onItemsChange={setFilteredItems} onViewModeChange={handleViewModeChange} hidePeople endAdornment={<InfoButton onClick={() => setFolderInfoOpen((open) => !open)} />} />
+              )}
+              {viewMode === "list" && <MyDriveListHeader items={filteredItems} selectedItems={selectedItems} onToggleAll={toggleAllSelection} />}
+            </div>
+            {viewMode === "grid"
+              ? <FileGrid items={filteredItems} selectedItemIds={selectedItems.map((i) => i.id)} onSelect={(id) => { const item = filteredItems.find((i) => i.id === id); if (item) toggleItemSelection(item); }} onOpen={openItem} />
+              : <MyDriveFileList items={filteredItems} selectedItems={selectedItems} onSelect={toggleItemSelection} onOpen={openItem} onInfo={(item) => { setSelectedItems([item]); setFolderInfoOpen(true); }} />
+            }
           </div>
-          {viewMode === "grid"
-            ? <FileGrid items={filteredItems} selectedItemIds={selectedItems.map((i) => i.id)} onSelect={(id) => { const item = filteredItems.find((i) => i.id === id); if (item) toggleItemSelection(item); }} onOpen={openItem} />
-            : <MyDriveFileList items={filteredItems} selectedItems={selectedItems} onSelect={toggleItemSelection} onOpen={openItem} onInfo={(item) => { setSelectedItems([item]); setFolderInfoOpen(true); }} />
-          }
-        </div>
-        {folderInfoOpen && <RightSidePanel items={selectedItems} folderInfo={myDriveAllItems.find((item) => item.type === "folder") ?? myDriveAllItems[0]} onCloseFolderInfo={() => setFolderInfoOpen(false)} />}
+          {folderInfoOpen && <RightSidePanel items={selectedItems} folderInfo={myDriveAllItems.find((item) => item.type === "folder") ?? myDriveAllItems[0]} onCloseFolderInfo={() => setFolderInfoOpen(false)} />}
       </section>
     </div>
   );
@@ -78,7 +80,8 @@ function InfoButton({ onClick }: { onClick: () => void }) {
   return <Tooltip><TooltipTrigger onClick={onClick} aria-label="Toggle folder information" className="flex size-10 items-center justify-center rounded-[8px] border border-[#E5E5EA] bg-white text-foreground/50 transition-[background-color,transform] duration-150 hover:bg-[#F9F9FB] active:scale-[0.96] motion-reduce:transition-none"><Info size={20} strokeWidth={1.75} aria-hidden="true" /></TooltipTrigger><TooltipContent>Folder information</TooltipContent></Tooltip>;
 }
 
-function SelectionActionToolbar() {
+function SelectionActionToolbar({ selectedItems }: { selectedItems: DriveItem[] }) {
+  const openSendFiles = useSendFilesDialog();
   const [moreOpen, setMoreOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -90,17 +93,17 @@ function SelectionActionToolbar() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [moreOpen]);
   const primaryActions = [
-    { label: "Download", icon: Download },
-    { label: "Share", icon: Share2 },
-    { label: "Copy link", icon: Link2, hideBelow: "md" },
-    { label: "Send files", icon: Send, hideBelow: "md" },
-    { label: "Add to starred", icon: Star, hideBelow: "xl" },
-    { label: "Move to", icon: FolderInput, hideBelow: "xl" },
+    { label: "Download", icon: Download, onClick: undefined as (() => void) | undefined },
+    { label: "Share", icon: Share2, onClick: undefined as (() => void) | undefined },
+    { label: "Copy link", icon: Link2, hideBelow: "md", onClick: undefined as (() => void) | undefined },
+    { label: "Send files", icon: Send, hideBelow: "md", onClick: () => openSendFiles(selectedItems) },
+    { label: "Add to starred", icon: Star, hideBelow: "xl", onClick: undefined as (() => void) | undefined },
+    { label: "Move to", icon: FolderInput, hideBelow: "xl", onClick: undefined as (() => void) | undefined },
   ];
 
   return <div ref={menuRef} className="relative flex items-center gap-0.5">
-    {primaryActions.map(({ label, icon: Icon, hideBelow }) => (
-      <button key={label} type="button" aria-label={label} className={`items-center gap-1.5 whitespace-nowrap rounded-[8px] px-2 md:px-3 text-[14px] font-medium transition-[background-color,transform] duration-150 active:scale-[0.96] motion-reduce:transition-none text-[#002896] hover:bg-[rgba(0,40,150,0.06)] h-9 ${hideBelow === "md" ? "hidden md:flex" : hideBelow === "xl" ? "hidden xl:flex" : "flex"}`}>
+    {primaryActions.map(({ label, icon: Icon, hideBelow, onClick }) => (
+      <button key={label} type="button" aria-label={label} onClick={onClick} className={`items-center gap-1.5 whitespace-nowrap rounded-[8px] px-2 md:px-3 text-[14px] font-medium transition-[background-color,transform] duration-150 active:scale-[0.96] motion-reduce:transition-none text-[#002896] hover:bg-[rgba(0,40,150,0.06)] h-9 ${hideBelow === "md" ? "hidden md:flex" : hideBelow === "xl" ? "hidden xl:flex" : "flex"}`}>
         <Icon size={16} strokeWidth={1.75} aria-hidden="true" />
         <span>{label}</span>
       </button>
@@ -108,8 +111,8 @@ function SelectionActionToolbar() {
     <div className="relative">
     <button type="button" onClick={() => setMoreOpen((open) => !open)} aria-label="More selection actions" aria-haspopup="menu" aria-expanded={moreOpen} className={`flex size-9 items-center justify-center rounded-[8px] text-[#002896] transition-[background-color,transform] duration-150 hover:bg-[rgba(0,40,150,0.06)] active:scale-[0.96] motion-reduce:transition-none ${moreOpen ? "bg-[rgba(0,40,150,0.06)]" : ""}`}><MoreVertical size={18} strokeWidth={1.75} aria-hidden="true" /></button>
     {moreOpen && <div className="absolute right-0 top-[calc(100%+8px)] z-[60] w-[220px] overflow-hidden rounded-[8px] border border-[#E1E1E6] bg-white py-1 shadow-[0_8px_24px_rgba(24,24,26,0.14)]" role="menu" aria-label="More selection actions">
-      {[{ label: "Copy link", icon: Link2, hideAbove: "md" }, { label: "Send files", icon: Send, hideAbove: "md" }, { label: "Add to starred", icon: Star, hideAbove: "xl" }, { label: "Move to", icon: FolderInput, hideAbove: "xl" }, { label: "Rename", icon: Pencil }, { label: "Make a copy", icon: Copy }, { label: "Write a comment", icon: MessageSquare }, { label: "Add or edit tags", icon: Tag }].map(({ label, icon: Icon, hideAbove }) => (
-        <button key={label} type="button" role="menuitem" onClick={() => setMoreOpen(false)} className={`h-10 w-full items-center gap-3 px-3 text-left text-body-md text-[#18181A] hover:bg-[#F9F9FB] focus:bg-[#F9F9FB] focus:outline-none ${hideAbove === "md" ? "flex md:hidden" : hideAbove === "xl" ? "flex xl:hidden" : "flex"}`}>
+      {[{ label: "Copy link", icon: Link2, hideAbove: "md", onClick: undefined as (() => void) | undefined }, { label: "Send files", icon: Send, hideAbove: "md", onClick: () => { setMoreOpen(false); openSendFiles(selectedItems); } }, { label: "Add to starred", icon: Star, hideAbove: "xl", onClick: undefined as (() => void) | undefined }, { label: "Move to", icon: FolderInput, hideAbove: "xl", onClick: undefined as (() => void) | undefined }, { label: "Rename", icon: Pencil, onClick: undefined as (() => void) | undefined }, { label: "Make a copy", icon: Copy, onClick: undefined as (() => void) | undefined }, { label: "Write a comment", icon: MessageSquare, onClick: undefined as (() => void) | undefined }, { label: "Add or edit tags", icon: Tag, onClick: undefined as (() => void) | undefined }].map(({ label, icon: Icon, hideAbove, onClick }) => (
+        <button key={label} type="button" role="menuitem" onClick={onClick ?? (() => setMoreOpen(false))} className={`h-10 w-full items-center gap-3 px-3 text-left text-body-md text-[#18181A] hover:bg-[#F9F9FB] focus:bg-[#F9F9FB] focus:outline-none ${hideAbove === "md" ? "flex md:hidden" : hideAbove === "xl" ? "flex xl:hidden" : "flex"}`}>
           <Icon size={18} strokeWidth={1.75} className="text-foreground/50" aria-hidden="true" />{label}
         </button>
       ))}

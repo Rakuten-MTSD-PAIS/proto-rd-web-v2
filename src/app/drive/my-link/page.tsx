@@ -26,7 +26,7 @@ function toItems(links: typeof allLinks): DriveItem[] {
     type: "other" as const,
     modified: l.modified,
     size: l.downloads,
-    owner: "You (Taro Rakuten)",
+    owner: "You (kiran.pingle)",
     location: "My Link",
   }));
 }

@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { X } from "lucide-react";
+import { Check, Pencil, X } from "lucide-react";
 import type { DriveItem } from "@/lib/types";
 import { FileIcon } from "./FileIcon";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -138,9 +138,171 @@ const sharedPersonAvatars: Record<string, string> = {
   "Kiran Pingle": "/avatars/kiran-pingle.svg",
 };
 
+function ActivityFeed({ owner, ownerAvatar, ownerInitials, ownerColor, itemName }: {
+  owner: string; ownerAvatar?: string; ownerInitials?: string; ownerColor?: string; itemName: string;
+}) {
+  const isOwner = owner.startsWith("You");
+  const youLabel = isOwner ? "You" : owner;
+  const groups = [
+    {
+      label: "Today",
+      items: [
+        { who: "You", avatar: undefined, initials: "KP", color: "#002896", action: `opened "${itemName}"`, time: "10:42 AM" },
+      ],
+    },
+    {
+      label: "Yesterday",
+      items: [
+        { who: youLabel, avatar: ownerAvatar, initials: ownerInitials, color: ownerColor, action: `renamed this ${itemName.includes(".") ? "file" : "folder"}`, time: "3:15 PM" },
+      ],
+    },
+    {
+      label: "Older",
+      items: [
+        { who: youLabel, avatar: ownerAvatar, initials: ownerInitials, color: ownerColor, action: `shared "${itemName}"`, time: "Sep 18, 2026" },
+        { who: youLabel, avatar: ownerAvatar, initials: ownerInitials, color: ownerColor, action: `created "${itemName}"`, time: "Sep 15, 2026" },
+      ],
+    },
+  ];
+  return (
+    <div className="pt-5">
+      {groups.map(({ label, items }) => (
+        <div key={label} className="mb-5">
+          <p className="mb-3 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+          <div className="flex flex-col gap-4">
+            {items.map(({ who, avatar, initials, color, action, time }, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-[8px] text-[11px] font-semibold text-white" style={{ backgroundColor: color ?? "#636366" }}>
+                  {avatar
+                    ? <Image src={avatar} alt="" width={32} height={32} unoptimized className="size-full object-cover" />
+                    : (initials ?? who.slice(0, 2).toUpperCase())}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] leading-5 text-[#303039]">
+                    <span className="font-medium">{who}</span>{" "}{action}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">{time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FolderNameField({ label, name }: { label: string; name: string }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(name);
+  const [draft, setDraft] = useState(name);
+  const [hovered, setHovered] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function startEdit() {
+    setDraft(value);
+    setEditing(true);
+    requestAnimationFrame(() => {
+      inputRef.current?.select();
+    });
+  }
+
+  function save() {
+    if (draft.trim()) setValue(draft.trim());
+    setEditing(false);
+  }
+
+  function cancel() {
+    setDraft(value);
+    setEditing(false);
+  }
+
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter") save();
+    if (e.key === "Escape") cancel();
+  }
+
+  return (
+    <dl className="mt-7 grid gap-0">
+      <div>
+        <dt className="text-caption text-muted-foreground">{label}</dt>
+        {editing ? (
+          <dd className="mt-1">
+            <input
+              ref={inputRef}
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onKeyDown={onKeyDown}
+              className="w-full rounded-[6px] border border-[#002896] bg-white px-2 py-1.5 text-[14px] text-[#303039] outline-none ring-2 ring-[#002896]/20"
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={save}
+              className="mt-2 flex h-8 items-center justify-center rounded-[6px] bg-[#002896] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#001E6E] active:scale-[0.96]"
+            >
+              Done
+            </button>
+          </dd>
+        ) : (
+          <dd
+            className="group mt-1 flex cursor-default items-center gap-1.5"
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+          >
+            <span className="break-words text-body-md text-[#303039]">{value}</span>
+            <button
+              type="button"
+              onClick={startEdit}
+              aria-label="Rename"
+              className={`flex size-6 shrink-0 items-center justify-center rounded-[6px] text-muted-foreground transition-[opacity,background-color] duration-150 hover:bg-[#F2F2F7] hover:text-[#18181A] ${hovered ? "opacity-100" : "opacity-0"}`}
+            >
+              <Pencil size={12} strokeWidth={2} />
+            </button>
+          </dd>
+        )}
+      </div>
+    </dl>
+  );
+}
+
+function AccessAvatars({ owner, ownerAvatar, ownerInitials, ownerColor, sharedWith }: {
+  owner: string;
+  ownerAvatar?: string;
+  ownerInitials?: string;
+  ownerColor?: string;
+  sharedWith?: string[];
+}) {
+  const people = [
+    { name: owner, avatar: ownerAvatar, initials: ownerInitials ?? owner.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase(), color: ownerColor },
+    ...(sharedWith ?? []).slice(0, 3).map(name => ({
+      name,
+      avatar: sharedPersonAvatars[name],
+      initials: name.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase(),
+      color: undefined as string | undefined,
+    })),
+  ];
+  return (
+    <div className="mt-3 flex items-center">
+      {people.map((p, i) => (
+        <span
+          key={p.name}
+          className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-[8px] border-2 border-white text-[11px] font-semibold text-white"
+          style={{ marginLeft: i === 0 ? 0 : -8, zIndex: people.length - i, backgroundColor: p.color ?? "#636366" }}
+          title={p.name}
+        >
+          {p.avatar
+            ? <Image src={p.avatar} alt="" width={32} height={32} unoptimized className="size-full object-cover" />
+            : p.initials}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function PersonInfo({ name, avatar, initials, color }: { name: string; avatar?: string; initials?: string; color?: string }) {
   const fallbackInitials = initials ?? name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-  return <div className="flex min-w-0 items-center gap-2"><span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#636366] text-[10px] font-semibold text-white" style={{ backgroundColor: color }}>{avatar ? <Image src={avatar} alt="" width={28} height={28} unoptimized className="size-full object-cover" /> : fallbackInitials}</span><span className="truncate text-body-md text-[#303039]">{name}</span></div>;
+  return <div className="flex min-w-0 items-center gap-2"><span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-[6px] bg-[#636366] text-[10px] font-semibold text-white" style={{ backgroundColor: color }}>{avatar ? <Image src={avatar} alt="" width={28} height={28} unoptimized className="size-full object-cover" /> : fallbackInitials}</span><span className="truncate text-body-md text-[#303039]">{name}</span></div>;
 }
 
 function SharedWithList({ people }: { people: string[] }) {
@@ -157,19 +319,11 @@ function SharedWithList({ people }: { people: string[] }) {
     }, 500);
   }
 
-  return <section className="mt-7" aria-busy={isLoading}><div className="flex items-center justify-between gap-2"><h3 className="text-caption text-muted-foreground">Shared with</h3>{people.length > 3 && <button type="button" onClick={showAll ? () => setShowAll(false) : showRemainingPeople} disabled={isLoading} className="text-caption text-[#002896] hover:underline disabled:cursor-wait disabled:opacity-70">{showAll ? "View less" : "View all"}</button>}</div><div className="mt-1 flex flex-col gap-2">{visiblePeople.map((person) => <PersonInfo key={person} name={person} avatar={sharedPersonAvatars[person]} />)}{isLoading && Array.from({ length: remainingCount }, (_, index) => <div key={index} className="flex items-center gap-2" aria-hidden="true"><Skeleton className="size-7 rounded-full" /><Skeleton className="h-4 w-28" /></div>)}</div></section>;
+  return <section className="mt-7" aria-busy={isLoading}><div className="flex items-center justify-between gap-2"><h3 className="text-caption text-muted-foreground">Shared with</h3>{people.length > 3 && <button type="button" onClick={showAll ? () => setShowAll(false) : showRemainingPeople} disabled={isLoading} className="text-caption text-[#002896] hover:underline disabled:cursor-wait disabled:opacity-70">{showAll ? "View less" : "View all"}</button>}</div><div className="mt-1 flex flex-col gap-2">{visiblePeople.map((person) => <PersonInfo key={person} name={person} avatar={sharedPersonAvatars[person]} />)}{isLoading && Array.from({ length: remainingCount }, (_, index) => <div key={index} className="flex items-center gap-2" aria-hidden="true"><Skeleton className="size-7 rounded-[6px]" /><Skeleton className="h-4 w-28" /></div>)}</div></section>;
 }
 
 export function RightSidePanel({ items = [], teamFolders = false, showActions = true, folderInfo, onCloseFolderInfo }: RightSidePanelProps) {
-  const infoContentRef = useRef<HTMLDivElement>(null);
-
-  function scrollInfoPanel(event: React.WheelEvent<HTMLElement>) {
-    const content = infoContentRef.current;
-    if (!content) return;
-    event.preventDefault();
-    event.stopPropagation();
-    content.scrollBy({ top: event.deltaY, behavior: "smooth" });
-  }
+  const [activeTab, setActiveTab] = useState<"details" | "activity">("details");
 
   if (folderInfo) {
     const previewItem = items[0];
@@ -177,28 +331,157 @@ export function RightSidePanel({ items = [], teamFolders = false, showActions = 
     const locationName = previewItem?.location ?? folderInfo.location.replace(/^in /, "");
     const parentFolderHref = locationName === "Team Drive" ? "/drive/team-drive" : "/drive/my-drive";
     if (!previewItem) {
-      return <aside className="fixed top-[60px] bottom-0 right-0 z-50 flex w-full sm:max-w-[360px] flex-col border-l border-[#F2F2F7] bg-white px-4 py-3 shadow-[-8px_0_24px_rgba(24,24,26,0.12)] xl:sticky xl:top-0 xl:bottom-auto xl:z-auto xl:h-[calc(100dvh-60px)] xl:w-[240px] xl:max-w-none xl:shrink-0 xl:self-start xl:shadow-none" aria-label="File information">
-        <div className="flex justify-end"><button type="button" onClick={onCloseFolderInfo} className="flex size-8 items-center justify-center rounded-[6px] text-foreground/50 hover:bg-[#F2F2F7] hover:text-[#18181A]" aria-label="Close file information"><X size={18} strokeWidth={1.75} aria-hidden="true" /></button></div>
-        <p className="mt-5 px-4 text-center text-[14px] leading-5 text-muted-foreground">No Item selected</p>
-      </aside>;
+      return (
+        <aside className="fixed top-[60px] bottom-0 right-0 z-50 flex w-full sm:max-w-[360px] flex-col border-l border-[#F2F2F7] bg-white px-4 py-3 shadow-[-8px_0_24px_rgba(24,24,26,0.12)] xl:sticky xl:top-0 xl:bottom-auto xl:z-auto xl:h-[calc(100dvh-60px)] xl:w-[240px] xl:max-w-none xl:shrink-0 xl:self-start xl:shadow-none" aria-label="File information">
+          <div className="flex justify-end"><button type="button" onClick={onCloseFolderInfo} className="flex size-8 items-center justify-center rounded-[6px] text-foreground/50 hover:bg-[#F2F2F7] hover:text-[#18181A]" aria-label="Close file information"><X size={18} strokeWidth={1.75} aria-hidden="true" /></button></div>
+          <p className="mt-5 px-4 text-center text-[14px] leading-5 text-muted-foreground">No Item selected</p>
+        </aside>
+      );
     }
     const isFolder = previewItem.type === "folder" && !isMultiSelection;
     const isTeamFolder = isFolder && previewItem.location === "Team Drive";
     const isSharedFolder = isFolder && Boolean(previewItem.shared);
     const folderType = isTeamFolder ? "Team folder" : isSharedFolder ? "Shared folder" : "Personal folder";
-    const infoTitle = isFolder ? "Folder information" : "File info";
-    return <aside onWheel={scrollInfoPanel} className="fixed top-[60px] bottom-0 right-0 z-50 flex w-full sm:max-w-[360px] flex-col overflow-hidden border-l border-[#F2F2F7] bg-white py-3 shadow-[-8px_0_24px_rgba(24,24,26,0.12)] xl:sticky xl:top-0 xl:bottom-auto xl:z-auto xl:h-[calc(100dvh-60px)] xl:w-[240px] xl:max-w-none xl:shrink-0 xl:self-start xl:shadow-none" aria-labelledby="folder-info-title">
-      <div className="z-10 -mt-3 flex shrink-0 items-center justify-between border-b border-[#E5E5EA] bg-white px-4 py-3"><h2 id="folder-info-title" className="text-body-lg font-semibold text-[#18181A]">{infoTitle}</h2><button type="button" onClick={onCloseFolderInfo} className="flex size-8 items-center justify-center rounded-[6px] text-foreground/50 hover:bg-[#F2F2F7] hover:text-[#18181A]" aria-label={`Close ${infoTitle.toLowerCase()}`}><X size={18} strokeWidth={1.75} aria-hidden="true" /></button></div>
-      <div ref={infoContentRef} tabIndex={0} aria-label={`${infoTitle} details`} className="min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-smooth px-4">
-        <div className="flex justify-center pt-7">
-        <div className="relative flex h-[60px] w-[60px] items-center justify-center">
-          {isMultiSelection ? <><span className="absolute top-2 h-6 w-14 rounded-[6px] border border-[#E5E5EA] bg-white" /><span className="absolute bottom-1 h-6 w-14 rounded-[6px] border border-[#E5E5EA] bg-white" /></> : <FileIcon type={previewItem.type} size={48} shared={isSharedFolder} teamFolder={isTeamFolder} thumbnail={previewItem.thumbnail} />}
+    const isOwner = previewItem.owner.startsWith("You");
+    const hasAccess = isTeamFolder || (isSharedFolder && previewItem.sharedWith && previewItem.sharedWith.length > 0);
+
+    // Access description — single sentence like Google Drive
+    let accessDesc = "Private to you";
+    if (hasAccess) {
+      const ownerLabel = isOwner ? "you" : previewItem.owner;
+      if (previewItem.sharedWith && previewItem.sharedWith.length > 0) {
+        const first = previewItem.sharedWith[0].toLowerCase().replace(" ", ".") + "@example.com";
+        const extra = previewItem.sharedWith.length > 1 ? ` and ${previewItem.sharedWith.length - 1} other${previewItem.sharedWith.length > 2 ? "s" : ""}` : "";
+        accessDesc = `Owned by ${ownerLabel}. Shared with ${first}${extra}.`;
+      } else {
+        accessDesc = `Owned by ${ownerLabel}.`;
+      }
+    }
+
+    return (
+      <aside className="fixed top-[60px] bottom-0 right-0 z-50 flex w-full sm:max-w-[360px] flex-col overflow-hidden border-l border-[#F2F2F7] bg-white shadow-[-8px_0_24px_rgba(24,24,26,0.12)] xl:sticky xl:top-0 xl:bottom-auto xl:z-auto xl:h-[calc(100dvh-60px)] xl:w-[240px] xl:max-w-none xl:shrink-0 xl:self-start xl:shadow-none" aria-label="Item details">
+        {/* Header: title + close */}
+        <div className="flex shrink-0 items-center justify-between border-b border-[#E5E5EA] px-4 pt-3 pb-3">
+          <h2 className="text-body-lg font-semibold text-[#18181A]">{isFolder ? "Folder information" : "File info"}</h2>
+          <button type="button" onClick={onCloseFolderInfo} className="flex size-8 shrink-0 items-center justify-center rounded-[6px] text-foreground/50 hover:bg-[#F2F2F7] hover:text-[#18181A]" aria-label="Close details"><X size={18} strokeWidth={1.75} aria-hidden="true" /></button>
         </div>
+
+        {/* Tabs */}
+        <div className="flex shrink-0 border-b border-[#E5E5EA] px-4" role="tablist">
+          {(["details", "activity"] as const).map(tab => (
+            <button
+              key={tab}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab}
+              onClick={() => setActiveTab(tab)}
+              className={`relative mr-4 pb-2 pt-3 text-[13px] font-medium capitalize transition-colors ${activeTab === tab ? "text-[#002896]" : "text-muted-foreground hover:text-[#18181A]"}`}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {activeTab === tab && <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-[#002896]" />}
+            </button>
+          ))}
         </div>
-      {!isMultiSelection && <><dl className="mt-7 grid gap-7"><div><dt className="text-caption text-muted-foreground">{isFolder ? "Folder name" : "File name"}</dt><dd className="mt-1 text-body-md text-[#303039] break-words">{previewItem.name}</dd></div><div><dt className="text-caption text-muted-foreground">{isFolder ? "Folder type" : "File type"}</dt><dd className="mt-1 text-body-md text-[#303039]">{isFolder ? folderType : previewItem.type.toUpperCase()}</dd></div><div><dt className="text-caption text-muted-foreground">Location</dt><dd className="mt-1 text-body-md"><Link href={parentFolderHref} className="text-[#002896] hover:underline">{locationName}</Link></dd></div><div><dt className="text-caption text-muted-foreground">Owner</dt><dd className="mt-1"><PersonInfo name={previewItem.owner} avatar={previewItem.ownerAvatar} initials={previewItem.ownerInitials} color={previewItem.ownerColor} /></dd></div><div><dt className="text-caption text-muted-foreground">Created</dt><dd className="mt-1 text-body-md text-[#303039]">2025.02.26</dd></div></dl>
-      {isSharedFolder && previewItem.sharedWith && previewItem.sharedWith.length > 0 && <SharedWithList people={previewItem.sharedWith} />}</>}
-      </div>
-    </aside>;
+
+        {/* Scrollable content */}
+        <div
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6 [scrollbar-color:#D1D1D6_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-[5px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#D1D1D6] [&::-webkit-scrollbar-track]:bg-transparent"
+          role="tabpanel"
+        >
+          {activeTab === "details" ? (
+            <>
+              {/* Icon */}
+              <div className="flex justify-center pt-7">
+                <div className="relative flex h-[60px] w-[60px] items-center justify-center">
+                  {isMultiSelection
+                    ? <><span className="absolute top-2 h-6 w-14 rounded-[6px] border border-[#E5E5EA] bg-white" /><span className="absolute bottom-1 h-6 w-14 rounded-[6px] border border-[#E5E5EA] bg-white" /></>
+                    : <FileIcon type={previewItem.type} size={48} shared={isSharedFolder} teamFolder={isTeamFolder} thumbnail={previewItem.thumbnail} />}
+                </div>
+              </div>
+
+              {!isMultiSelection && <>
+                <FolderNameField label={isFolder ? "Folder name" : "File name"} name={previewItem.name} />
+
+                {/* Who has access */}
+                <section className="mt-6" aria-label="Who has access">
+                  <h3 className="text-[13px] font-semibold text-[#18181A]">Who has access</h3>
+                  {/* Avatars: owner | divider | shared people (+ you if not owner) */}
+                  <div className="mt-3 flex items-center gap-2">
+                    {/* Owner avatar */}
+                    <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-[8px] text-[11px] font-semibold text-white" style={{ backgroundColor: previewItem.ownerColor ?? "#636366" }} title={previewItem.owner}>
+                      {previewItem.ownerAvatar
+                        ? <Image src={previewItem.ownerAvatar} alt="" width={32} height={32} unoptimized className="size-full object-cover" />
+                        : (previewItem.ownerInitials ?? previewItem.owner.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase())}
+                    </span>
+                    {/* Vertical divider */}
+                    {(hasAccess || !isOwner) && (
+                      <span className="h-7 w-px shrink-0 bg-[#D1D1D6]" aria-hidden="true" />
+                    )}
+                    {/* Shared people — overlapping. When not owner, prepend current user */}
+                    <div className="flex items-center">
+                      {(() => {
+                        const shared = previewItem.sharedWith ?? [];
+                        const displayList = !isOwner
+                          ? [{ name: "You", avatar: undefined as string | undefined, initials: "KP", color: "#002896" }, ...shared.slice(0, 2).map(n => ({ name: n, avatar: sharedPersonAvatars[n], initials: n.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase(), color: undefined as string | undefined }))]
+                          : shared.slice(0, 3).map(n => ({ name: n, avatar: sharedPersonAvatars[n], initials: n.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase(), color: undefined as string | undefined }));
+                        const overflow = (previewItem.sharedWith?.length ?? 0) - (isOwner ? 3 : 2);
+                        return <>
+                          {displayList.map((p, i) => (
+                            <span key={p.name} className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-[8px] border-2 border-white text-[11px] font-semibold text-white" style={{ marginLeft: i === 0 ? 0 : -8, zIndex: displayList.length - i, backgroundColor: p.color ?? "#636366" }} title={p.name}>
+                              {p.avatar ? <Image src={p.avatar} alt="" width={32} height={32} unoptimized className="size-full object-cover" /> : p.initials}
+                            </span>
+                          ))}
+                          {overflow > 0 && (
+                            <span className="flex size-8 shrink-0 items-center justify-center rounded-[8px] border-2 border-white bg-[#E5E5EA] text-[10px] font-semibold text-[#636366]" style={{ marginLeft: -8 }}>+{overflow}</span>
+                          )}
+                        </>;
+                      })()}
+                    </div>
+                  </div>
+                  {/* Access description */}
+                  {!isOwner && hasAccess ? (
+                    <div className="mt-2 text-[13px] leading-5">
+                      <p className="text-muted-foreground">Owned by {previewItem.owner}.</p>
+                      <p className="text-muted-foreground">(you)kiran.pingle@example.com</p>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-[13px] leading-5 text-muted-foreground">{accessDesc}</p>
+                  )}
+                  {isOwner && (
+                    <button type="button" className="mt-3 flex h-9 w-full items-center justify-center rounded-full border border-[#C7C7CC] bg-white px-5 text-[13px] font-medium text-[#002896] transition-colors hover:bg-[#F4F5FD] hover:border-[#002896] active:scale-[0.96]">
+                      Manage access
+                    </button>
+                  )}
+                </section>
+
+                <div className="my-6 border-t border-[#F2F2F7]" />
+
+                <dl className="grid gap-5 pb-2">
+                  <div>
+                    <dt className="text-caption text-muted-foreground">{isFolder ? "Folder type" : "File type"}</dt>
+                    <dd className="mt-1 text-body-md text-[#303039]">{isFolder ? folderType : previewItem.type.toUpperCase()}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-caption text-muted-foreground">Location</dt>
+                    <dd className="mt-1 text-body-md"><Link href={parentFolderHref} className="text-[#002896] hover:underline">{locationName}</Link></dd>
+                  </div>
+                  <div>
+                    <dt className="text-caption text-muted-foreground">Owner</dt>
+                    <dd className="mt-1"><PersonInfo name={previewItem.owner} avatar={previewItem.ownerAvatar} initials={previewItem.ownerInitials} color={previewItem.ownerColor} /></dd>
+                  </div>
+                  <div>
+                    <dt className="text-caption text-muted-foreground">Created</dt>
+                    <dd className="mt-1 text-body-md text-[#303039]">2025.02.26</dd>
+                  </div>
+                </dl>
+              </>}
+            </>
+          ) : (
+            <ActivityFeed owner={previewItem.owner} ownerAvatar={previewItem.ownerAvatar} ownerInitials={previewItem.ownerInitials} ownerColor={previewItem.ownerColor} itemName={previewItem.name} />
+          )}
+        </div>
+      </aside>
+    );
   }
 
   const item = items[0];

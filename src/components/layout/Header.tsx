@@ -228,7 +228,7 @@ export function Header({ onMenuClick }: HeaderProps) {
             aria-expanded={accountOpen}
             onClick={() => setAccountOpen((open) => !open)}
           >
-            <Image src="/profile-cat.png" alt="Taro Rakuten" width={32} height={32} className="size-8 rounded-[8px] object-cover" />
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-[8px] bg-[#002896] text-[11px] font-semibold text-white">KP</span>
             <ChevronDownIcon size={14} className="text-foreground/50" />
           </button>
           {accountOpen && <AccountMenu onClose={() => setAccountOpen(false)} />}

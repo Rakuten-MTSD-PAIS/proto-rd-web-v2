@@ -138,8 +138,9 @@ export function FileRow({ item, showOwner = false, showLocation = false, teamFol
       {!hideActions && <td className={overlayActions ? "absolute inset-y-0 right-3 flex items-center" : `w-[152px] py-2 pr-3 ${compact ? "hidden sm:table-cell" : ""}`}>
         <div onClick={(event) => event.stopPropagation()} className="flex items-center justify-end gap-1">
           {/* Hover pill — desktop (lg+) only */}
+          {/* Hover pill — visible on sm+ screens when row is hovered */}
           {trashMode ? (
-            <div className={`pointer-events-none items-center gap-1 rounded-[10px] bg-[#F2F2F2] p-1 opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 motion-reduce:transition-none ${alwaysShowMore ? "hidden lg:flex" : "hidden sm:flex"}`}>
+            <div className="pointer-events-none hidden items-center gap-1 rounded-[10px] bg-[#F2F2F2] p-1 opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 motion-reduce:transition-none sm:flex">
               <Tooltip><TooltipTrigger className="flex size-8 items-center justify-center rounded-[6px] text-[#002896] transition-colors duration-150 hover:bg-[#E5E5EA] motion-reduce:transition-none" aria-label={`Restore ${item.name}`}>
                 <RotateCcw size={17} strokeWidth={1.75} aria-hidden="true" />
               </TooltipTrigger><TooltipContent>Restore</TooltipContent></Tooltip>
@@ -149,7 +150,7 @@ export function FileRow({ item, showOwner = false, showLocation = false, teamFol
               {onInfo && <Tooltip><TooltipTrigger onClick={onInfo} className="flex size-8 items-center justify-center rounded-[6px] text-foreground transition-colors duration-150 hover:bg-[#E5E5EA] motion-reduce:transition-none" aria-label={`View information for ${item.name}`}><Info size={17} strokeWidth={1.75} aria-hidden="true" /></TooltipTrigger><TooltipContent>View information</TooltipContent></Tooltip>}
             </div>
           ) : (
-            <div className={`pointer-events-none items-center gap-1 rounded-[10px] bg-[#F2F2F2] p-1 opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 motion-reduce:transition-none ${alwaysShowMore ? "hidden lg:flex" : "hidden sm:flex"}`}>
+            <div className="pointer-events-none hidden items-center gap-1 rounded-[10px] bg-[#F2F2F2] p-1 opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 motion-reduce:transition-none sm:flex">
               <Tooltip><TooltipTrigger className="flex size-8 items-center justify-center rounded-[6px] text-foreground transition-colors duration-150 hover:bg-[#E5E5EA] motion-reduce:transition-none" aria-label={`Download ${item.name}`}>
                 <Download size={17} strokeWidth={1.75} aria-hidden="true" />
               </TooltipTrigger><TooltipContent>Download</TooltipContent></Tooltip>
@@ -163,13 +164,10 @@ export function FileRow({ item, showOwner = false, showLocation = false, teamFol
               <Tooltip><TooltipTrigger className="flex size-8 items-center justify-center rounded-[6px] text-foreground transition-colors duration-150 hover:bg-[#E5E5EA] motion-reduce:transition-none" aria-label={`${item.starred ? "Remove" : "Add"} ${item.name} ${item.starred ? "from" : "to"} starred`}>
                 {item.starred ? <StarOff size={17} strokeWidth={1.75} aria-hidden="true" /> : <Star size={17} strokeWidth={1.75} aria-hidden="true" />}
               </TooltipTrigger><TooltipContent>{item.starred ? "Remove from starred" : "Add to starred"}</TooltipContent></Tooltip>
-              <MoreActionsMenu itemName={item.name} isFolder={item.type === "folder"} />
             </div>
           )}
-          {/* Always-visible ⋮ — small/tablet only when alwaysShowMore, hidden on desktop where hover pill takes over */}
-          {alwaysShowMore && !trashMode
-            ? <span className="lg:hidden"><MoreActionsMenu itemName={item.name} isFolder={item.type === "folder"} onInfo={onInfo} starred={item.starred} /></span>
-            : null}
+          {/* Always-visible ⋮ button — accessible on all screen sizes */}
+          {!trashMode && <MoreActionsMenu itemName={item.name} isFolder={item.type === "folder"} onInfo={onInfo} starred={item.starred} driveItem={item} />}
         </div>
       </td>}
     </tr>

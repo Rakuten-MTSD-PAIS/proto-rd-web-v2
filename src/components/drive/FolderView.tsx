@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useViewMode } from "@/hooks/useViewMode";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Copy, Download, FolderInput, Info, Link2, MessageSquare, MoreVertical, Pencil, Send, Share2, Star, Tag, Trash2, X } from "lucide-react";
@@ -17,6 +18,8 @@ import { UploadButton } from "@/components/drive/PageToolbar";
 import { FileGrid } from "@/components/drive/FileGrid";
 import { FileRow } from "@/components/drive/FileRow";
 import { RightSidePanel } from "@/components/drive/RightSidePanel";
+import { CopyLinkModal } from "@/components/drive/CopyLinkModal";
+import { useSendFilesDialog } from "@/components/drive/SendFilesModal";
 import { getFolderItems, getFolderBreadcrumb } from "@/lib/mock-data";
 import type { DriveItem, ViewMode } from "@/lib/types";
 import type { FolderNode } from "@/lib/mock-data";
@@ -29,20 +32,11 @@ export function FolderView({ folderId }: { folderId: string }) {
   const breadcrumbs = useMemo(() => getFolderBreadcrumb(folderId), [folderId]);
   const currentFolder = breadcrumbs[breadcrumbs.length - 1];
 
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    if (typeof window !== "undefined") {
-      return (localStorage.getItem("folderViewMode") as ViewMode) ?? "list";
-    }
-    return "list";
-  });
-
-  const handleViewModeChange = (mode: ViewMode) => {
-    setViewMode(mode);
-    localStorage.setItem("folderViewMode", mode);
-  };
+  const [viewMode, handleViewModeChange] = useViewMode();
   const [filteredItems, setFilteredItems] = useState(allItems);
   const [selectedItems, setSelectedItems] = useState<DriveItem[]>([]);
   const [folderInfoOpen, setFolderInfoOpen] = useState(false);
+  const [copyLinkOpen, setCopyLinkOpen] = useState(false);
 
   const openItem = useCallback((item: DriveItem) => {
     if (item.type === "folder") {
@@ -74,25 +68,23 @@ export function FolderView({ folderId }: { folderId: string }) {
 
   return (
     <div className="flex min-h-full flex-col">
+      <div className="border-b border-[#E5E5EA] px-4 pb-4 pt-5 sm:px-6">
+        <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+          <FolderBreadcrumb breadcrumbs={breadcrumbs} />
+          <div className="flex shrink-0 items-center gap-2">
+            <button type="button" className="flex h-10 items-center gap-2 rounded-[8px] border border-[#E1E1E6] bg-white px-3 sm:px-4 text-body-md font-medium text-[#18181A] transition-colors hover:bg-[#F9F9FB] whitespace-nowrap">
+              <FolderPlusIcon size={20} className="text-foreground/50" />
+              <span className="hidden sm:inline">{isTeamDrive ? "Create Team Folder" : "Create Folder"}</span>
+            </button>
+            <UploadButton />
+          </div>
+        </div>
+      </div>
       <section className="flex min-w-0 flex-1">
         <div className="min-w-0 flex-1">
-          <div className={`sticky top-0 z-30 bg-white border-b border-[#E5E5EA] px-4 pt-3 sm:px-6 ${viewMode === "grid" ? "pb-4" : ""}`}>
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <FolderBreadcrumb breadcrumbs={breadcrumbs} />
-              </div>
-              {isTeamDrive && (
-                <div className="flex shrink-0 items-center gap-2 pb-4">
-                  <button type="button" className="flex h-10 items-center gap-2 rounded-[8px] border border-[#E1E1E6] bg-white px-3 sm:px-4 text-body-md font-medium text-[#18181A] transition-colors hover:bg-[#F9F9FB] whitespace-nowrap">
-                    <FolderPlusIcon size={20} className="text-foreground/50" />
-                    <span className="hidden sm:inline">Create Team Folder</span>
-                  </button>
-                  <UploadButton />
-                </div>
-              )}
-            </div>
+          <div className={`sticky top-0 z-30 bg-white px-4 pt-3 sm:px-6 ${viewMode === "grid" ? "pb-4" : ""}`}>
             {selectedItems.length > 0 ? (
-              <div className="flex h-10 items-center justify-between gap-3 pb-3">
+              <div className="flex items-center justify-between gap-3 pb-3">
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
@@ -103,7 +95,7 @@ export function FolderView({ folderId }: { folderId: string }) {
                     <X size={18} strokeWidth={1.75} />
                     <span className="hidden sm:inline">Cancel</span>
                   </button>
-                  <SelectionToolbar compact={folderInfoOpen} />
+                  <SelectionToolbar compact={folderInfoOpen} onCopyLink={() => setCopyLinkOpen(true)} selectedItems={selectedItems} />
                 </div>
                 <FilterBar
                   items={allItems}
@@ -116,13 +108,15 @@ export function FolderView({ folderId }: { folderId: string }) {
                 />
               </div>
             ) : (
-              <FilterBar
-                items={allItems}
-                viewMode={viewMode}
-                onItemsChange={setFilteredItems}
-                onViewModeChange={handleViewModeChange}
-                endAdornment={<InfoButton onClick={() => setFolderInfoOpen(o => !o)} />}
-              />
+              <div className="pb-3">
+                <FilterBar
+                  items={allItems}
+                  viewMode={viewMode}
+                  onItemsChange={setFilteredItems}
+                  onViewModeChange={handleViewModeChange}
+                  endAdornment={<InfoButton onClick={() => setFolderInfoOpen(o => !o)} />}
+                />
+              </div>
             )}
             {viewMode === "list" && (
               <FolderListHeader
@@ -163,6 +157,12 @@ export function FolderView({ folderId }: { folderId: string }) {
           />
         )}
       </section>
+      {copyLinkOpen && (
+        <CopyLinkModal
+          itemName={selectedItems[0]?.name ?? "Selected item"}
+          onClose={() => setCopyLinkOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -183,7 +183,7 @@ function FolderBreadcrumb({ breadcrumbs }: { breadcrumbs: FolderNode[] }) {
   const showEllipsis = hiddenCrumbs.length > 0;
 
   return (
-    <Breadcrumb className="mb-4">
+    <Breadcrumb>
       <BreadcrumbList className="text-[16px] text-muted-foreground">
         {/* Root — My Drive or Team Drive */}
         <BreadcrumbItem>
@@ -259,7 +259,8 @@ function InfoButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function SelectionToolbar({ compact }: { compact?: boolean }) {
+function SelectionToolbar({ compact, onCopyLink, selectedItems }: { compact?: boolean; onCopyLink?: () => void; selectedItems?: DriveItem[] }) {
+  const openSendFiles = useSendFilesDialog();
   const containerRef = useRef<HTMLDivElement>(null);
   const btnRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const cachedWidths = useRef<number[]>([]);
@@ -280,22 +281,22 @@ function SelectionToolbar({ compact }: { compact?: boolean }) {
   }, []);
 
   const allPrimary = [
-    { label: "Download", icon: Download },
-    { label: "Share", icon: Share2 },
-    { label: "Copy link", icon: Link2 },
-    { label: "Send files", icon: Send },
-    { label: "Add to starred", icon: Star },
-    { label: "Move to", icon: FolderInput },
+    { label: "Download", icon: Download, onClick: undefined as (() => void) | undefined },
+    { label: "Share", icon: Share2, onClick: undefined as (() => void) | undefined },
+    { label: "Copy link", icon: Link2, onClick: onCopyLink },
+    { label: "Send files", icon: Send, onClick: () => openSendFiles(selectedItems ?? []) },
+    { label: "Add to starred", icon: Star, onClick: undefined as (() => void) | undefined },
+    { label: "Move to", icon: FolderInput, onClick: undefined as (() => void) | undefined },
   ];
   const primaryActions = compact
-    ? allPrimary.slice(0, 4)
+    ? allPrimary.slice(0, 3)
     : allPrimary;
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const PINNED = compact ? 2 : screenSize === "sm" ? 2 : screenSize === "md" ? 4 : 6; // compact: Download+Share; full: +Copy link+Send files
+    const PINNED = compact ? 3 : screenSize === "sm" ? 2 : screenSize === "md" ? 4 : 6; // compact: Download+Share+Copy link; full: +Send files etc.
 
     const compute = () => {
       // Cache button widths once while all are visible
@@ -343,13 +344,14 @@ function SelectionToolbar({ compact }: { compact?: boolean }) {
 
   return (
     <div ref={containerRef} className="relative flex min-w-0 items-center gap-0.5">
-      {primaryActions.map(({ label, icon: Icon }, i) => (
+      {primaryActions.map(({ label, icon: Icon, onClick }, i) => (
         <button
           key={label}
           ref={el => { btnRefs.current[i] = el; }}
           type="button"
           aria-label={label}
-          style={i >= (compact ? 2 : screenSize === "sm" ? 2 : screenSize === "md" ? 4 : 6) && i >= overflowFrom ? { display: "none" } : undefined}
+          onClick={onClick}
+          style={i >= (compact ? 3 : screenSize === "sm" ? 2 : screenSize === "md" ? 4 : 6) && i >= overflowFrom ? { display: "none" } : undefined}
           className="flex items-center gap-1.5 whitespace-nowrap rounded-[8px] px-3 text-[14px] font-medium transition-[background-color,transform] duration-150 active:scale-[0.96] motion-reduce:transition-none text-[#002896] hover:bg-[rgba(0,40,150,0.06)] h-9"
         >
           <Icon size={16} strokeWidth={1.75} aria-hidden="true" />
@@ -368,9 +370,11 @@ function SelectionToolbar({ compact }: { compact?: boolean }) {
           <MoreVertical size={18} strokeWidth={1.75} aria-hidden="true" />
         </button>
         {moreOpen && (
-          <div className="absolute right-0 top-[calc(100%+8px)] z-[60] w-[220px] overflow-hidden rounded-[8px] border border-[#E1E1E6] bg-white py-1 shadow-[0_8px_24px_rgba(24,24,26,0.14)]" role="menu">
-            {overflowPrimary.map(({ label, icon: Icon }) => (
-              <button key={label} type="button" role="menuitem" onClick={() => setMoreOpen(false)} className="flex h-10 w-full items-center gap-3 px-3 text-left text-body-md text-[#18181A] hover:bg-[#F9F9FB] focus:outline-none">
+          <div
+            className="absolute right-0 top-[calc(100%+8px)] z-[60] w-[220px] overflow-hidden rounded-[8px] border border-[#E1E1E6] bg-white py-1 shadow-[0_8px_24px_rgba(24,24,26,0.14)] animate-in fade-in zoom-in-95 duration-150" role="menu"
+          >
+            {overflowPrimary.map(({ label, icon: Icon, onClick }) => (
+              <button key={label} type="button" role="menuitem" onClick={() => { setMoreOpen(false); onClick?.(); }} className="flex h-10 w-full items-center gap-3 px-3 text-left text-body-md text-[#18181A] hover:bg-[#F9F9FB] focus:outline-none">
                 <Icon size={18} strokeWidth={1.75} className="text-foreground/50" aria-hidden="true" />
                 {label}
               </button>

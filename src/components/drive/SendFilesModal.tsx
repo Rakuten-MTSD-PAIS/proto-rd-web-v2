@@ -4,45 +4,63 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import Image from "next/image";
 import { CalendarIcon, X, Eye, EyeOff } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
+import type { DriveItem, FileType } from "@/lib/types";
+import { FileIcon } from "@/components/drive/FileIcon";
 
 type Tab = "files" | "email" | "settings";
 type View = "main" | "link-created" | "email-sent";
 
+/** A real browser File or a virtual DriveItem entry pre-loaded from the drive. */
+type FileEntry =
+  | { kind: "real"; file: File; previewUrl?: string }
+  | { kind: "drive"; name: string; ext: string; sizeLabel: string; itemType: FileType; thumbnail?: string };
+
 interface SendFilesModalProps {
   onClose: () => void;
+  preloadedItems?: DriveItem[];
 }
 
-const SendFilesDialogContext = createContext<(() => void) | null>(null);
+type OpenFn = (items?: DriveItem | DriveItem[]) => void;
 
-export function SendFilesDialogProvider({ onOpen, children }: { onOpen: () => void; children: ReactNode }) {
-  useEffect(() => {
-    const onClick = (event: MouseEvent) => {
-      if (!(event.target instanceof Element)) return;
-      const action = event.target.closest("button, [role='menuitem']");
-      const label = action?.textContent?.trim().replace(/\s+/g, " ").toLowerCase();
-      if (label === "send files") onOpen();
-    };
-    document.addEventListener("click", onClick);
-    return () => document.removeEventListener("click", onClick);
-  }, [onOpen]);
+const SendFilesDialogContext = createContext<OpenFn | null>(null);
 
+export function SendFilesDialogProvider({ onOpen, children }: { onOpen: OpenFn; children: ReactNode }) {
   return <SendFilesDialogContext.Provider value={onOpen}>{children}</SendFilesDialogContext.Provider>;
 }
 
-export function useSendFilesDialog() {
+export function useSendFilesDialog(): OpenFn {
   const open = useContext(SendFilesDialogContext);
   if (!open) throw new Error("useSendFilesDialog must be used within SendFilesDialogProvider");
   return open;
 }
 
-const badgeStyles: Record<string, { background: string; color: string }> = {
-  pptx: { background: "#FFF3E0", color: "#E65100" },
-  jpg: { background: "#E8F5E9", color: "#2E7D32" },
-  jpeg: { background: "#E8F5E9", color: "#2E7D32" },
-  docx: { background: "#E3F2FD", color: "#1565C0" },
-  mp3: { background: "#F3E5F5", color: "#6A1B9A" },
-  pdf: { background: "#FFEBEE", color: "#C62828" },
-};
+function entryName(e: FileEntry) { return e.kind === "real" ? e.file.name : e.name; }
+function entryExt(e: FileEntry) { return e.kind === "real" ? fileExtension(e.file.name) : e.ext; }
+function entrySizeLabel(e: FileEntry) { return e.kind === "real" ? fileSize(e.file.size) : e.sizeLabel; }
+function entryThumbnail(e: FileEntry) { return e.kind === "drive" ? e.thumbnail : e.previewUrl; }
+function extToFileType(ext: string): FileType {
+  if (ext === "pdf") return "pdf";
+  if (["jpg", "jpeg", "png", "gif", "webp", "heic", "avif"].includes(ext)) return "image";
+  if (["zip", "rar", "7z", "tar", "gz"].includes(ext)) return "zip";
+  if (["mp3", "wav", "aac", "flac", "ogg"].includes(ext)) return "audio";
+  if (["docx", "doc"].includes(ext)) return "word";
+  if (["xlsx", "xls", "csv"].includes(ext)) return "excel";
+  if (["pptx", "ppt"].includes(ext)) return "ppt";
+  if (["svg", "ai", "eps"].includes(ext)) return "vector";
+  if (["mp4", "mov", "avi", "mkv", "webm"].includes(ext)) return "video";
+  return "other";
+}
+function entryFileType(e: FileEntry): FileType {
+  if (e.kind === "drive") return e.itemType;
+  return extToFileType(fileExtension(e.file.name));
+}
+function totalSizeLabel(entries: FileEntry[]) {
+  const realBytes = entries.filter(e => e.kind === "real").reduce((s, e) => s + (e as { kind: "real"; file: File }).file.size, 0);
+  const hasVirtual = entries.some(e => e.kind === "drive");
+  if (!realBytes && hasVirtual) return entries.map(entrySizeLabel).join(" + ");
+  return fileSize(realBytes);
+}
+
 
 function fileExtension(name: string) {
   return name.split(".").pop()?.toLowerCase() || "file";
@@ -53,13 +71,20 @@ function fileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function totalSize(files: File[]) {
-  return fileSize(files.reduce((total, file) => total + file.size, 0));
-}
 
-export function SendFilesModal({ onClose }: SendFilesModalProps) {
+export function SendFilesModal({ onClose, preloadedItems }: SendFilesModalProps) {
   const uploadInputRef = useRef<HTMLInputElement>(null);
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<FileEntry[]>(() => {
+    if (!preloadedItems?.length) return [];
+    return preloadedItems.map(item => ({
+      kind: "drive" as const,
+      name: item.name,
+      ext: item.name.split(".").pop()?.toLowerCase() ?? item.type,
+      sizeLabel: item.size,
+      itemType: item.type,
+      thumbnail: item.thumbnail,
+    }));
+  });
   const [tab, setTab] = useState<Tab>("files");
   const [view, setView] = useState<View>("main");
   const [recipients, setRecipients] = useState<string[]>([]);
@@ -118,9 +143,21 @@ export function SendFilesModal({ onClose }: SendFilesModalProps) {
 
   const addFiles = (newFiles: FileList | null) => {
     if (!newFiles) return;
-    setFiles((current) => [...current, ...Array.from(newFiles)]);
+    const entries: FileEntry[] = Array.from(newFiles).map(f => ({
+      kind: "real" as const,
+      file: f,
+      previewUrl: f.type.startsWith("image/") ? URL.createObjectURL(f) : undefined,
+    }));
+    setFiles((current) => [...current, ...entries]);
     setTab("files");
   };
+
+  useEffect(() => {
+    return () => {
+      files.forEach(e => { if (e.kind === "real" && e.previewUrl) URL.revokeObjectURL(e.previewUrl); });
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handlePickerChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     addFiles(event.target.files);
@@ -189,7 +226,7 @@ export function SendFilesModal({ onClose }: SendFilesModalProps) {
                   </div>
                 </div>
                 <div className="flex flex-col gap-[6px]">
-                  <p className="px-2 font-['Rakuten_Sans_UI'] text-[14px] leading-[18px] text-[#636366]">Total {files.length} file{files.length === 1 ? "" : "s"} · {totalSize(files)}</p>
+                  <p className="px-2 font-['Rakuten_Sans_UI'] text-[14px] leading-[18px] text-[#636366]">Total {files.length} file{files.length === 1 ? "" : "s"} · {totalSizeLabel(files)}</p>
                   <div className="border-t border-[#E5E5EA]" />
                 </div>
                 <div className="flex flex-col gap-[6px] px-2 py-3 font-['Rakuten_Sans_UI'] text-[14px] leading-5 text-[#636366]">
@@ -235,7 +272,7 @@ export function SendFilesModal({ onClose }: SendFilesModalProps) {
                 )}
               </div>
               <div className="flex flex-col gap-[6px]">
-                <p className="px-1 font-['Rakuten_Sans_UI'] text-[14px] leading-[18px] text-[#636366]">Total {files.length} file{files.length === 1 ? "" : "s"} · {totalSize(files)}</p>
+                <p className="px-1 font-['Rakuten_Sans_UI'] text-[14px] leading-[18px] text-[#636366]">Total {files.length} file{files.length === 1 ? "" : "s"} · {totalSizeLabel(files)}</p>
                 <div className="border-t border-[#E5E5EA]" />
               </div>
               <div className="flex flex-col gap-[6px] px-1 font-['Rakuten_Sans_UI'] text-[14px] leading-5 text-[#636366]">
@@ -304,19 +341,19 @@ export function SendFilesModal({ onClose }: SendFilesModalProps) {
                 {tab === "files" && (
                   <div className="min-h-[280px] pt-4 sm:min-h-[440px]">
                     <div className="flex items-center px-2 text-[14px] leading-[18px]">
-                      <span className="flex-1 font-['Rakuten_Sans'] text-[#6B7280]">{files.length ? `Total ${files.length} file${files.length === 1 ? "" : "s"} · ${totalSize(files)}` : "No files selected"}</span>
+                      <span className="flex-1 font-['Rakuten_Sans'] text-[#6B7280]">{files.length ? `Total ${files.length} file${files.length === 1 ? "" : "s"} · ${totalSizeLabel(files)}` : "No files selected"}</span>
                       {files.length > 0 && <button type="button" onClick={() => setFiles([])} className="font-['Rakuten_Sans'] font-semibold text-[#DC2626] underline underline-offset-2">Clear All</button>}
                     </div>
                     <div className="mt-3">
-                      {files.length ? files.map((file, index) => {
-                        const ext = fileExtension(file.name);
-                        const colors = badgeStyles[ext] ?? { background: "#F2F2F7", color: "#636366" };
-                        return <div key={`${file.name}-${index}`} className="flex h-14 items-center justify-between border-b border-[#E5E5EA] px-3 py-2.5">
+                      {files.length ? files.map((entry, index) => {
+                        return <div key={`${entryName(entry)}-${index}`} className="flex h-14 items-center justify-between border-b border-[#E5E5EA] px-3 py-2.5">
                           <div className="flex min-w-0 items-center gap-3">
-                            <span className="flex size-9 shrink-0 items-center justify-center rounded-[6px] font-['Rakuten_Sans_UI'] text-[10px] font-bold uppercase" style={colors}>{ext}</span>
-                            <span className="min-w-0"><span className="block truncate font-['Rakuten_Sans'] text-[14px] font-semibold leading-[18px] text-[#18181A]">{file.name}</span><span className="block font-['Rakuten_Sans_UI'] text-[14px] leading-5 text-[#636366]">{fileSize(file.size)}</span></span>
+                            <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-[6px]">
+                              <FileIcon type={entryFileType(entry)} size={40} thumbnail={entryThumbnail(entry)} />
+                            </span>
+                            <span className="min-w-0"><span className="block truncate font-['Rakuten_Sans'] text-[14px] font-semibold leading-[18px] text-[#18181A]">{entryName(entry)}</span><span className="block font-['Rakuten_Sans_UI'] text-[14px] leading-5 text-[#636366]">{entrySizeLabel(entry)}</span></span>
                           </div>
-                          <button type="button" onClick={() => setFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="ml-3 flex size-7 shrink-0 items-center justify-center rounded-[6px] text-[#AEAEB2] hover:bg-[#F2F2F7] hover:text-[#636366]" aria-label={`Remove ${file.name}`}><X size={22} strokeWidth={1.5} /></button>
+                          <button type="button" onClick={() => setFiles((current) => current.filter((_, i) => i !== index))} className="ml-3 flex size-7 shrink-0 items-center justify-center rounded-[6px] text-[#AEAEB2] hover:bg-[#F2F2F7] hover:text-[#636366]" aria-label={`Remove ${entryName(entry)}`}><X size={22} strokeWidth={1.5} /></button>
                         </div>;
                       }) : <div className="flex min-h-[230px] items-center justify-center text-center font-['Rakuten_Sans_UI'] text-[14px] text-[#636366] sm:min-h-[390px]">Choose files to add them to your link.</div>}
                     </div>

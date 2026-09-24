@@ -4,14 +4,15 @@ import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { SendFilesDialogProvider, SendFilesModal } from "@/components/drive/SendFilesModal";
+import type { DriveItem } from "@/lib/types";
 
 export default function DriveLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [sendFilesOpen, setSendFilesOpen] = useState(false);
+  const [sendFilesState, setSendFilesState] = useState<{ open: boolean; items?: DriveItem[] }>({ open: false });
 
   return (
-    <SendFilesDialogProvider onOpen={() => setSendFilesOpen(true)}>
+    <SendFilesDialogProvider onOpen={(items) => setSendFilesState({ open: true, items: items ? (Array.isArray(items) ? items : [items]) : undefined })}>
       <div className="flex h-dvh overflow-hidden bg-[#F2F2F7]">
       {mobileOpen && (
         <button
@@ -32,7 +33,7 @@ export default function DriveLayout({ children }: { children: React.ReactNode })
           }}
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
-        onSendFiles={() => setSendFilesOpen(true)}
+        onSendFiles={() => setSendFilesState({ open: true })}
       />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header onMenuClick={() => setMobileOpen(true)} />
@@ -40,7 +41,7 @@ export default function DriveLayout({ children }: { children: React.ReactNode })
           {children}
         </main>
       </div>
-      {sendFilesOpen && <SendFilesModal onClose={() => setSendFilesOpen(false)} />}
+      {sendFilesState.open && <SendFilesModal onClose={() => setSendFilesState({ open: false })} preloadedItems={sendFilesState.items} />}
       </div>
     </SendFilesDialogProvider>
   );

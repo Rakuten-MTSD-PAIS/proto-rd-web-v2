@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useViewMode } from "@/hooks/useViewMode";
 import { useRouter } from "next/navigation";
 import { FilterBar } from "@/components/drive/FilterBar";
 import { FileGrid } from "@/components/drive/FileGrid";
@@ -22,7 +23,7 @@ export default function TrashPage() {
     if (item.type === "folder") return;
     router.push(`/preview/${item.id}`);
   }
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [viewMode, handleViewModeChange] = useViewMode();
   const [filteredItems, setFilteredItems] = useState(trashItems);
   const [selectedItems, setSelectedItems] = useState<DriveItem[]>([]);
   const [folderInfoOpen, setFolderInfoOpen] = useState(false);
@@ -130,7 +131,7 @@ export default function TrashPage() {
                   items={trashItems}
                   viewMode={viewMode}
                   onItemsChange={setFilteredItems}
-                  onViewModeChange={setViewMode}
+                  onViewModeChange={handleViewModeChange}
                   hidePeople
                   hideFilters
                   endAdornment={<InfoButton onClick={() => setFolderInfoOpen((o) => !o)} />}
@@ -141,7 +142,7 @@ export default function TrashPage() {
                 items={trashItems}
                 viewMode={viewMode}
                 onItemsChange={setFilteredItems}
-                onViewModeChange={setViewMode}
+                onViewModeChange={handleViewModeChange}
                 hidePeople
                 endAdornment={<InfoButton onClick={() => setFolderInfoOpen((o) => !o)} />}
               />

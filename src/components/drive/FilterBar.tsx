@@ -145,7 +145,7 @@ function PeopleMenu({ people, selected, onSelect }: { people: string[]; selected
 }
 
 function PersonAvatar({ person, index }: { person: string; index: number }) {
-  if (person.startsWith("You")) return <Image src="/profile-cat.png" alt="" width={48} height={48} className="size-9 shrink-0 rounded-full object-cover" />;
+  if (person.startsWith("You")) return <span className="flex size-9 shrink-0 items-center justify-center rounded-[8px] bg-[#002896] text-[11px] font-semibold text-white">KP</span>;
   const colors = ["#9B3FD4", "#0080B0", "#C14020", "#1A8040", "#7A5500", "#B0004E", "#005E8B"];
   const initials = person.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
   return <span className="flex size-9 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white" style={{ backgroundColor: colors[index % colors.length] }}>{initials}</span>;
