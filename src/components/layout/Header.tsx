@@ -6,10 +6,18 @@ import { CircleHelp, Clock, Database, FileBadge, FileImage, FilePenLine, Folder,
 import { SearchIcon, ChevronDownIcon } from "@/components/icons";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useRouter, useSearchParams } from "next/navigation";
-import { FilterBar } from "@/components/drive/FilterBar";
-import type { DriveItem, ViewMode } from "@/lib/types";
-import { myDriveItems, recentItems, sharedItems, starredItems, teamDriveItems } from "@/lib/mock-data";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import type { DriveItem } from "@/lib/types";
+import { myDriveItems, recentItems, sharedItems, starredItems, teamDriveItems, trashItems, getFolderBreadcrumb, getFolderItems } from "@/lib/mock-data";
+
+const ROOT_SECTIONS: Record<string, { label: string; items: DriveItem[] }> = {
+  "/drive/my-drive": { label: "My Drive", items: myDriveItems },
+  "/drive/team-drive": { label: "Team Drive", items: teamDriveItems },
+  "/drive/trash": { label: "Trash", items: trashItems },
+  "/drive/shared": { label: "Shared with Me", items: sharedItems },
+  "/drive/received": { label: "Received Link", items: sharedItems },
+  "/drive/my-link": { label: "My Link", items: sharedItems },
+};
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -21,13 +29,13 @@ const searchSuggestions: DriveItem[] = [
   ...teamDriveItems,
   ...sharedItems,
   ...starredItems,
+  ...trashItems,
 ];
 
 export function Header({ onMenuClick }: HeaderProps) {
   const [accountOpen, setAccountOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredSearchSuggestions, setFilteredSearchSuggestions] = useState<DriveItem[]>(searchSuggestions);
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     if (typeof window === "undefined") return [];
     try { return JSON.parse(localStorage.getItem("rd-recent-searches") ?? "[]"); } catch { return []; }
@@ -36,6 +44,18 @@ export function Header({ onMenuClick }: HeaderProps) {
   const searchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const normalizedPathname = pathname.replace(/\/+$/, "");
+  const currentFolderId = normalizedPathname.match(/^\/drive\/folder\/([^/]+)/)?.[1];
+  const currentFolder = currentFolderId ? getFolderBreadcrumb(currentFolderId).at(-1) : undefined;
+  const currentRootSection = !currentFolderId ? ROOT_SECTIONS[normalizedPathname] : undefined;
+  const currentScopeLabel = currentFolder?.name ?? currentRootSection?.label;
+  const [searchScope, setSearchScope] = useState<"everywhere" | "current">("everywhere");
+
+  useEffect(() => {
+    setSearchScope("everywhere");
+  }, [currentFolderId, pathname]);
 
   useEffect(() => {
     const urlQuery = searchParams.get("search") ?? "";
@@ -79,17 +99,38 @@ export function Header({ onMenuClick }: HeaderProps) {
     };
   }, []);
 
-  const visibleSuggestions = filteredSearchSuggestions.filter(({ name, owner }) =>
-    `${name} ${owner}`.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const currentScopeItemIds = currentFolderId
+    ? new Set(getFolderItems(currentFolderId).map((i) => i.id))
+    : currentRootSection
+      ? new Set(currentRootSection.items.map((i) => i.id))
+      : null;
+
+  const visibleSuggestions = searchSuggestions
+    .filter(({ name, owner }) => `${name} ${owner}`.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter((item) => searchScope === "everywhere" || !currentScopeItemIds || currentScopeItemIds.has(item.id));
 
   const showAllResults = (query = searchQuery) => {
     const trimmed = query.trim();
     saveRecentSearch(trimmed);
     const params = new URLSearchParams();
     if (trimmed) params.set("search", trimmed);
+    // Remember where the search was launched from so closing can return there,
+    // regardless of whether the "Everywhere" or "In <X>" scope pill is active.
+    if (currentFolderId) {
+      params.set("origin", `/drive/folder/${currentFolderId}`);
+      if (searchScope === "current") params.set("folder", currentFolderId);
+    } else if (currentRootSection) {
+      params.set("origin", normalizedPathname);
+    }
     router.push(`/drive/recent?${params.toString()}`);
     setSearchOpen(false);
+  };
+
+  const closeSearch = () => {
+    const origin = searchParams.get("origin");
+    setSearchQuery("");
+    setSearchOpen(false);
+    router.push(origin ?? "/drive/recent");
   };
 
   return (
@@ -122,7 +163,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               style={{ fontFamily: "'Rakuten Sans UI', sans-serif" }}
             />
             {searchQuery && (
-              <button type="button" onClick={() => { setSearchQuery(""); router.push("/drive/recent"); }} aria-label="Clear search" className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#C7C7CC] text-white transition-colors hover:bg-[#8E8E93]">
+              <button type="button" onClick={closeSearch} aria-label="Clear search" className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#C7C7CC] text-white transition-colors hover:bg-[#8E8E93]">
                 <X size={12} strokeWidth={2.5} aria-hidden="true" />
               </button>
             )}
@@ -132,9 +173,26 @@ export function Header({ onMenuClick }: HeaderProps) {
             className="absolute left-0 top-[calc(100%+8px)] z-[1000] flex w-full max-h-[calc(100dvh-84px)] flex-col overflow-visible rounded-[16px] border border-border-subtle bg-background shadow-[0_16px_40px_rgba(24,24,26,0.16)] max-md:fixed max-md:left-4 max-md:top-[68px] max-md:w-[calc(100vw-2rem)]"
             aria-label="Search suggestions"
           >
-            <div className="border-b border-border-subtle px-5 py-3">
-              <FilterBar items={searchSuggestions} viewMode={"list" as ViewMode} onItemsChange={setFilteredSearchSuggestions} onViewModeChange={() => {}} hideViewControls searchQuery={searchQuery} />
-            </div>
+            {currentScopeLabel && (
+              <div className="flex items-center gap-2 border-b border-border-subtle px-5 py-3">
+                <button
+                  type="button"
+                  onClick={() => setSearchScope("everywhere")}
+                  aria-pressed={searchScope === "everywhere"}
+                  className={`flex h-9 items-center rounded-full px-4 text-[14px] font-medium transition-colors ${searchScope === "everywhere" ? "bg-[#002896] text-white" : "bg-[#F2F2F7] text-[#18181A] hover:bg-[#E5E5EA]"}`}
+                >
+                  Everywhere
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSearchScope("current")}
+                  aria-pressed={searchScope === "current"}
+                  className={`flex h-9 max-w-[220px] items-center truncate rounded-full px-4 text-[14px] font-medium transition-colors ${searchScope === "current" ? "bg-[#002896] text-white" : "bg-[#F2F2F7] text-[#18181A] hover:bg-[#E5E5EA]"}`}
+                >
+                  <span className="truncate">In &ldquo;{currentScopeLabel}&rdquo;</span>
+                </button>
+              </div>
+            )}
 
             <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-5">
               {(() => {
@@ -150,7 +208,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                           <button type="button" className="min-w-0 flex-1 text-left text-[14px] text-foreground" onClick={() => { setSearchQuery(query); showAllResults(query); }}>
                             {query}
                           </button>
-                          <button type="button" onClick={() => removeRecentSearch(query)} className="hidden size-6 items-center justify-center rounded-full text-foreground/40 hover:bg-[#E5E5EA] hover:text-foreground group-hover:flex" aria-label={`Remove "${query}" from recent searches`}>
+                          <button type="button" onClick={() => removeRecentSearch(query)} className="flex size-6 shrink-0 items-center justify-center rounded-full text-foreground/40 opacity-0 transition-opacity hover:bg-[#E5E5EA] hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100" aria-label={`Remove "${query}" from recent searches`}>
                             <X size={13} strokeWidth={2} />
                           </button>
                         </div>
@@ -162,7 +220,19 @@ export function Header({ onMenuClick }: HeaderProps) {
                   return (
                     <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
                       <SearchIcon size={28} className="text-foreground/30" aria-hidden="true" />
-                      <p className="text-[14px] text-muted-foreground">Search for files and folders</p>
+                      <p className="text-[14px] text-muted-foreground">
+                        {searchScope === "current" && currentScopeLabel ? `Search in "${currentScopeLabel}"` : "Search for files and folders"}
+                      </p>
+                    </div>
+                  );
+                }
+                if (visibleSuggestions.length === 0) {
+                  return (
+                    <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                      <SearchX className="size-7 text-foreground/30" aria-hidden="true" />
+                      <p className="text-[14px] text-muted-foreground">
+                        No results for &ldquo;{searchQuery}&rdquo;{searchScope === "current" && currentScopeLabel ? ` in "${currentScopeLabel}"` : ""}
+                      </p>
                     </div>
                   );
                 }
@@ -176,11 +246,11 @@ export function Header({ onMenuClick }: HeaderProps) {
             </div>
 
             <div className="flex items-center justify-between border-t border-border-subtle px-5 py-3">
-              <button type="button" onClick={() => { setSearchOpen(false); setSearchQuery(""); router.push("/drive/recent"); }} className="flex h-10 items-center gap-2 rounded-[8px] border border-[#E1E1E6] bg-white px-4 text-[14px] font-medium text-[#18181A] transition-colors hover:bg-[#F9F9FB]">
+              <button type="button" onClick={closeSearch} className="flex h-10 items-center gap-2 rounded-[8px] border border-[#E1E1E6] bg-white px-4 text-[14px] font-medium text-[#18181A] transition-colors hover:bg-[#F9F9FB]">
                 <X size={15} strokeWidth={2} aria-hidden="true" />
                 Cancel
               </button>
-              <button type="button" onClick={showAllResults} className="flex h-10 items-center gap-2 rounded-[8px] bg-[#002896] px-4 text-[14px] font-medium text-white transition-colors hover:bg-[#001F73]">
+              <button type="button" onClick={() => showAllResults()} className="flex h-10 items-center gap-2 rounded-[8px] bg-[#002896] px-4 text-[14px] font-medium text-white transition-colors hover:bg-[#001F73]">
                 <SearchIcon size={15} />
                 Search
               </button>

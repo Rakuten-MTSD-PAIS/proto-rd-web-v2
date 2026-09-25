@@ -79,8 +79,8 @@ export function Calendar({ selected, onSelect }: CalendarProps) {
               <button
                 type="button"
                 onClick={() => onSelect?.(new Date(year, month, d))}
-                className={`flex size-8 items-center justify-center rounded-full text-[14px] transition-colors duration-100
-                  ${isSelected(d) ? "bg-[#002896] text-white font-semibold" : isToday(d) ? "border border-[#002896] text-[#002896] font-semibold hover:bg-[#EEF1FA]" : "text-[#18181A] hover:bg-[#F2F2F7]"}`}
+                className={`flex size-8 items-center justify-center rounded-full border text-[14px] transition-colors duration-100
+                  ${isSelected(d) ? "border-[#002896] bg-[#002896] text-white font-semibold" : isToday(d) ? "border-[#002896] text-[#002896] font-semibold hover:bg-[#EEF1FA]" : "border-transparent text-[#18181A] hover:bg-[#F2F2F7]"}`}
               >
                 {d}
               </button>

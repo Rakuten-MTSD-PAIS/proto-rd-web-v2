@@ -1,31 +1,31 @@
 "use client";
 
-import { useState } from "react";
 import { FileUp, FolderUp } from "lucide-react";
 import { FolderPlusIcon, ChevronDownIcon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export function UploadButton({ size = 20 }: { size?: number }) {
-  const [open, setOpen] = useState(false);
   return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        className="flex h-10 items-center gap-2 rounded-[8px] border border-[#E1E1E6] bg-white px-4 text-body-md font-medium text-[#18181A] transition-colors hover:bg-[#F9F9FB]"
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={<Button variant="outline" size="lg" className="group/dropdown-menu-trigger text-body-md" />}
       >
         <FileUp size={size} strokeWidth={1.75} className="text-foreground/50" />
         Upload
-        <ChevronDownIcon size={16} className={`ml-1 text-foreground/50 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-[calc(100%+8px)] z-[60] w-[196px] rounded-[8px] border border-[#E1E1E6] bg-white py-1 shadow-[0_6px_16px_rgba(24,24,26,0.14)]" role="menu" aria-label="Upload options">
-          <button type="button" role="menuitem" onClick={() => setOpen(false)} className="flex w-full items-center gap-3 px-4 py-3 text-left text-body-md text-[#18181A] hover:bg-[#F9F9FB]"><FileUp size={20} strokeWidth={1.75} className="text-foreground/50" />Upload file</button>
-          <button type="button" role="menuitem" onClick={() => setOpen(false)} className="flex w-full items-center gap-3 px-4 py-3 text-left text-body-md text-[#18181A] hover:bg-[#F9F9FB]"><FolderUp size={20} strokeWidth={1.75} className="text-foreground/50" />Upload folder</button>
-        </div>
-      )}
-    </div>
+        <ChevronDownIcon size={16} className="ml-1 text-foreground/50 transition-transform group-data-[popup-open]/dropdown-menu-trigger:rotate-180" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[196px]">
+        <DropdownMenuItem className="gap-3 px-3 py-2.5 text-body-md">
+          <FileUp size={20} strokeWidth={1.75} className="text-foreground/50" />
+          Upload file
+        </DropdownMenuItem>
+        <DropdownMenuItem className="gap-3 px-3 py-2.5 text-body-md">
+          <FolderUp size={20} strokeWidth={1.75} className="text-foreground/50" />
+          Upload folder
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -47,9 +47,9 @@ export function PageToolbar({ breadcrumbs, showActions = true, selectionCount }:
       <div className="flex items-center gap-2 flex-wrap">
         {breadcrumbs.map((crumb, i) => (
           <span key={i} className="flex items-center gap-2">
-            {i > 0 && <span className="text-[#C7C7CC] text-[20px] font-normal">/</span>}
+            {i > 0 && <span className="text-[#C7C7CC] text-[1.25rem] font-normal">/</span>}
             <span
-              className={i === breadcrumbs.length - 1 ? "text-title-lg font-semibold text-[#18181A]" : "text-title-lg font-normal text-muted-foreground"}
+              className={i === breadcrumbs.length - 1 ? "text-[1.25rem] font-semibold text-[#18181A]" : "text-[1.25rem] font-normal text-muted-foreground"}
               style={{ fontFamily: "'Rakuten Sans', sans-serif" }}
             >
               {crumb.label}
@@ -68,10 +68,10 @@ export function PageToolbar({ breadcrumbs, showActions = true, selectionCount }:
 
       {showActions && (
         <div className="flex items-center gap-2">
-          <button className="flex h-10 items-center gap-2 rounded-[8px] border border-[#E1E1E6] bg-white px-3 sm:px-4 text-body-md font-medium text-[#18181A] transition-colors hover:bg-[#F9F9FB]">
+          <Button variant="outline" size="lg" className="px-3 text-body-md sm:px-4">
             <FolderPlusIcon size={20} className="text-foreground/50" />
             <span className="hidden sm:inline">Create Folder</span>
-          </button>
+          </Button>
           <UploadButton />
         </div>
       )}

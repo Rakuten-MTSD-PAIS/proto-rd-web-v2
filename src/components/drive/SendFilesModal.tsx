@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import Image from "next/image";
 import { CalendarIcon, X, Eye, EyeOff } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
+import { Tab, TabList } from "@/components/ui/tabs";
 import type { DriveItem, FileType } from "@/lib/types";
 import { FileIcon } from "@/components/drive/FileIcon";
 
@@ -324,18 +325,24 @@ export function SendFilesModal({ onClose, preloadedItems }: SendFilesModalProps)
 
               <div className="mt-4">
                 <div className="sticky top-0 z-20 isolate -mx-4 bg-white px-4 shadow-[0_1px_0_#E5E5EA] sm:-mx-6 sm:px-6">
-                  <div role="tablist" aria-label="Send files options" className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <TabList aria-label="Send files options" className="gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {[
                       { id: "files" as const, icon: "/figma/send-files/uploaded.svg", label: `${files.length} Item${files.length === 1 ? "" : "s"} Uploaded`, width: "" },
                       { id: "email" as const, icon: "/figma/send-files/email.svg", label: "Email ( Optional )", width: "" },
                       { id: "settings" as const, icon: "/figma/send-files/settings.svg", label: "Settings ( Optional )", width: "flex-1" },
                     ].map(({ id, icon, label, width }) => (
-                      <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={`-mb-px flex h-12 shrink-0 items-center gap-2 border-b-2 px-3 font-['Rakuten_Sans'] text-[14px] font-semibold whitespace-nowrap sm:px-4 ${width} ${tab === id ? "border-[#002896] text-[#002896]" : "border-transparent text-[#636366] hover:text-[#18181A]"}`}>
+                      <Tab
+                        key={id}
+                        variant="underline"
+                        aria-selected={tab === id}
+                        onClick={() => setTab(id)}
+                        className={`-mb-px h-12 shrink-0 gap-2 rounded-none border-b-2 px-3 font-['Rakuten_Sans'] text-[14px] font-semibold whitespace-nowrap hover:bg-transparent sm:px-4 ${width} ${tab === id ? "border-[#002896] text-[#002896]" : "border-transparent text-[#636366] hover:text-[#18181A]"}`}
+                      >
                         <Image src={icon} alt="" width={id === "files" ? 24 : 20} height={id === "files" ? 24 : 20} className={tab === id ? "" : "grayscale"} />
                         {label}
-                      </button>
+                      </Tab>
                     ))}
-                  </div>
+                  </TabList>
                 </div>
 
                 {tab === "files" && (

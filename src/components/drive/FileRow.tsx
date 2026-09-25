@@ -104,7 +104,7 @@ export function FileRow({ item, showOwner = false, showLocation = false, teamFol
             <span className="text-[12px] leading-[16px] text-muted-foreground">{item.modified}</span>
             {item.starred && <Star size={12} strokeWidth={1.75} fill="currentColor" className="text-foreground/50" aria-hidden="true" />}
             {item.shared && item.type !== "folder" && <ShareIcon size={12} className="text-foreground/50" aria-label="Shared" />}
-            {item.size && item.size !== "–" && item.size !== "-" && <span className="text-[12px] leading-[16px] text-muted-foreground">· {item.size}</span>}
+            {item.size && item.size !== "–" && item.size !== "-" && item.size !== "—" && <span className="text-[12px] leading-[16px] text-muted-foreground">· {item.size}</span>}
           </div>
         )}
       </td>

@@ -7,6 +7,7 @@ import { Check, Pencil, X } from "lucide-react";
 import type { DriveItem } from "@/lib/types";
 import { FileIcon } from "./FileIcon";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tab, TabList } from "@/components/ui/tabs";
 
 interface RightSidePanelProps {
   items?: DriveItem[];
@@ -367,21 +368,20 @@ export function RightSidePanel({ items = [], teamFolders = false, showActions = 
         </div>
 
         {/* Tabs */}
-        <div className="flex shrink-0 border-b border-[#E5E5EA] px-4" role="tablist">
+        <TabList className="shrink-0 border-b border-[#E5E5EA] px-4">
           {(["details", "activity"] as const).map(tab => (
-            <button
+            <Tab
               key={tab}
-              type="button"
-              role="tab"
+              variant="underline"
               aria-selected={activeTab === tab}
               onClick={() => setActiveTab(tab)}
-              className={`relative mr-4 pb-2 pt-3 text-[13px] font-medium capitalize transition-colors ${activeTab === tab ? "text-[#002896]" : "text-muted-foreground hover:text-[#18181A]"}`}
+              className={`relative mr-4 h-auto rounded-none border-none px-0 pb-2 pt-3 text-[13px] font-medium capitalize hover:bg-transparent ${activeTab === tab ? "text-[#002896]" : "text-muted-foreground hover:text-[#18181A]"}`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
               {activeTab === tab && <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-[#002896]" />}
-            </button>
+            </Tab>
           ))}
-        </div>
+        </TabList>
 
         {/* Scrollable content */}
         <div

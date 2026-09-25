@@ -25,6 +25,7 @@ import type { DriveItem, ViewMode } from "@/lib/types";
 import type { FolderNode } from "@/lib/mock-data";
 
 const FOLDER_COLUMNS = "grid-cols-[36px_minmax(0,1fr)] lg:grid-cols-[36px_minmax(0,1fr)_176px_120px]";
+const TEAM_FOLDER_COLUMNS = "grid-cols-[36px_minmax(0,1fr)] lg:grid-cols-[36px_minmax(0,1fr)_150px_176px_120px]";
 
 export function FolderView({ folderId }: { folderId: string }) {
   const router = useRouter();
@@ -123,6 +124,7 @@ export function FolderView({ folderId }: { folderId: string }) {
                 items={filteredItems}
                 selectedItems={selectedItems}
                 onToggleAll={toggleAllSelection}
+                teamFolders={isTeamDrive}
               />
             )}
           </div>
@@ -172,8 +174,9 @@ function FolderBreadcrumb({ breadcrumbs }: { breadcrumbs: FolderNode[] }) {
   const [ellipsisOpen, setEllipsisOpen] = useState(false);
 
   const isTeamDrive = breadcrumbs[0]?.id === "td-root";
-  // Strip virtual td-root from the navigable crumb list
-  const crumbs = breadcrumbs.filter(c => c.id !== "td-root");
+  const isTrash = breadcrumbs[0]?.id === "trash-root";
+  // Strip virtual roots (td-root, trash-root) from the navigable crumb list
+  const crumbs = breadcrumbs.filter(c => c.id !== "td-root" && c.id !== "trash-root");
 
   // Always visible: My Drive/Team Drive | … | parent | Current
   const lastCrumb = crumbs[crumbs.length - 1] ?? null;
@@ -184,11 +187,13 @@ function FolderBreadcrumb({ breadcrumbs }: { breadcrumbs: FolderNode[] }) {
 
   return (
     <Breadcrumb>
-      <BreadcrumbList className="text-[16px] text-muted-foreground">
+      <BreadcrumbList className="text-[1.25rem] text-muted-foreground">
         {/* Root — My Drive or Team Drive */}
         <BreadcrumbItem>
           {isTeamDrive ? (
             <BreadcrumbLink render={<Link href="/drive/team-drive" />}>Team Drive</BreadcrumbLink>
+          ) : isTrash ? (
+            <BreadcrumbLink render={<Link href="/drive/trash" />}>Trash</BreadcrumbLink>
           ) : (
             <BreadcrumbLink render={<Link href="/drive/my-drive" />}>My Drive</BreadcrumbLink>
           )}
@@ -201,7 +206,7 @@ function FolderBreadcrumb({ breadcrumbs }: { breadcrumbs: FolderNode[] }) {
             <BreadcrumbItem>
               <DropdownMenu open={ellipsisOpen} onOpenChange={setEllipsisOpen}>
                 <DropdownMenuTrigger
-                  className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[14px] text-muted-foreground hover:bg-[#F2F2F7] hover:text-[#18181A] transition-colors"
+                  className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[1.25rem] text-muted-foreground hover:bg-[#F2F2F7] hover:text-[#18181A] transition-colors"
                   aria-label="Show hidden breadcrumbs"
                 >
                   <BreadcrumbEllipsis />
@@ -235,7 +240,7 @@ function FolderBreadcrumb({ breadcrumbs }: { breadcrumbs: FolderNode[] }) {
           <>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage className="text-[24px] font-semibold text-[#18181A]" style={{ fontFamily: "'Rakuten Sans', sans-serif" }}>{lastCrumb.name}</BreadcrumbPage>
+              <BreadcrumbPage className="text-[1.25rem] font-semibold text-[#18181A]" style={{ fontFamily: "'Rakuten Sans', sans-serif" }}>{lastCrumb.name}</BreadcrumbPage>
             </BreadcrumbItem>
           </>
         )}
@@ -398,19 +403,21 @@ function SelectionToolbar({ compact, onCopyLink, selectedItems }: { compact?: bo
   );
 }
 
-function FolderListHeader({ items, selectedItems, onToggleAll }: {
+function FolderListHeader({ items, selectedItems, onToggleAll, teamFolders }: {
   items: DriveItem[];
   selectedItems: DriveItem[];
   onToggleAll: (checked: boolean) => void;
+  teamFolders?: boolean;
 }) {
   const selectedIds = new Set(selectedItems.map(i => i.id));
   const allSelected = items.length > 0 && items.every(i => selectedIds.has(i.id));
   return (
-    <div className={`-mx-4 grid h-[42px] items-center border-b border-[#F2F2F7] bg-white text-left text-[14px] font-normal leading-[20px] text-muted-foreground shadow-[0_1px_0_#E5E5EA] sm:-mx-6 ${FOLDER_COLUMNS}`}>
+    <div className={`-mx-4 grid h-[42px] items-center border-b border-[#F2F2F7] bg-white text-left text-[14px] font-normal leading-[20px] text-muted-foreground shadow-[0_1px_0_#E5E5EA] sm:-mx-6 ${teamFolders ? TEAM_FOLDER_COLUMNS : FOLDER_COLUMNS}`}>
       <span className="px-3">
         <Checkbox checked={allSelected} onCheckedChange={checked => onToggleAll(checked === true)} className="border-[#C7C7CC]" aria-label="Select all" />
       </span>
       <span className="px-2">Name</span>
+      {teamFolders && <span className="hidden lg:block px-4">Owner</span>}
       <span className="hidden lg:block px-4">Modified</span>
       <span className="hidden lg:block px-4">Size</span>
     </div>
@@ -426,10 +433,11 @@ function FolderFileList({ items, selectedItems, teamFolders, onSelect, onOpen, o
   onInfo: (item: DriveItem) => void;
 }) {
   const selectedIds = new Set(selectedItems.map(i => i.id));
+  const columns = teamFolders ? TEAM_FOLDER_COLUMNS : FOLDER_COLUMNS;
   return (
     <div className="w-full overflow-hidden">
       <table className="block w-full border-collapse">
-        <thead className="sr-only"><tr><th>Select</th><th>Name</th><th>Modified</th><th>Size</th></tr></thead>
+        <thead className="sr-only"><tr><th>Select</th><th>Name</th>{teamFolders && <th>Owner</th>}<th>Modified</th><th>Size</th></tr></thead>
         <tbody className="block w-full">
           {items.map(item => (
             <FileRow
@@ -439,12 +447,14 @@ function FolderFileList({ items, selectedItems, teamFolders, onSelect, onOpen, o
               compact
               overlayActions
               alwaysShowMore
+              showOwner={teamFolders}
+              ownerFirst={teamFolders}
               showCheckbox={selectedItems.length > 0}
               selected={selectedIds.has(item.id)}
               onSelect={() => onSelect(item)}
               onOpen={selectedItems.length === 0 ? () => onOpen(item) : undefined}
               onInfo={() => onInfo(item)}
-              gridColumns={FOLDER_COLUMNS}
+              gridColumns={columns}
               showMobileMetadata
             />
           ))}

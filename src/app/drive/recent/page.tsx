@@ -2,13 +2,14 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useViewMode } from "@/hooks/useViewMode";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FilterBar } from "@/components/drive/FilterBar";
 import { FileRow } from "@/components/drive/FileRow";
 import { FolderCards } from "@/components/drive/FolderCards";
 import { ChevronDownIcon } from "@/components/icons";
 import { Checkbox } from "@/components/ui/checkbox";
-import { recentFileGroups, recentFolders, recentItems } from "@/lib/mock-data";
+import { recentFileGroups, recentFolders, recentItems, getFolderBreadcrumb } from "@/lib/mock-data";
 import type { DriveItem, ViewMode } from "@/lib/types";
 import { FileGrid } from "@/components/drive/FileGrid";
 import { RightSidePanel } from "@/components/drive/RightSidePanel";
@@ -21,6 +22,9 @@ export default function RecentPage() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search") ?? "";
   const isSearching = searchQuery.trim().length > 0;
+  const searchFolderId = searchParams.get("folder");
+  const searchFolder = searchFolderId ? getFolderBreadcrumb(searchFolderId).at(-1) : undefined;
+  const searchOrigin = searchParams.get("origin");
   const [viewMode, handleViewModeChange] = useViewMode();
   const [foldersOpen, setFoldersOpen] = useState(true);
   const [filteredItems, setFilteredItems] = useState(recentItems);
@@ -75,11 +79,23 @@ export default function RecentPage() {
         <div className={`sticky top-0 z-30 bg-white px-6 pt-3 ${viewMode === "list" ? "pb-0" : "pb-3"}`}>
           <div className="mb-3 flex flex-wrap items-baseline gap-2">
             {isSearching ? (
-              <h1 id="recent-files-heading" className="flex items-center gap-2 text-[20px] font-normal leading-[28px] text-[#18181A]">
-                <button type="button" onClick={() => router.push("/drive/recent")} aria-label="Clear search" className="flex size-6 items-center justify-center rounded-full text-foreground/40 transition-colors hover:bg-[#F2F2F7] hover:text-[#18181A]">
+              <h1 id="recent-files-heading" className="flex items-center gap-2 text-[20px] font-semibold leading-[28px] text-[#18181A]">
+                <button type="button" onClick={() => router.push(searchOrigin ?? "/drive/recent")} aria-label="Clear search" className="flex size-6 items-center justify-center rounded-full text-foreground/40 transition-colors hover:bg-[#F2F2F7] hover:text-[#18181A]">
                   <X size={16} strokeWidth={2} aria-hidden="true" />
                 </button>
-                Search results for &ldquo;{searchQuery}&rdquo;
+                {searchFolder ? (
+                  <>
+                    Search Results in{" "}
+                    <Link href={`/drive/folder/${searchFolder.id}`} className="font-semibold text-[#0039B9] hover:underline">
+                      {searchFolder.name}
+                    </Link>{" "}
+                    for <span className="font-bold text-muted-foreground">&ldquo;{searchQuery}&rdquo;</span>
+                  </>
+                ) : (
+                  <>
+                    Search Results for <span className="font-bold text-muted-foreground">&ldquo;{searchQuery}&rdquo;</span>
+                  </>
+                )}
               </h1>
             ) : (
               <h1 id="recent-files-heading" className="text-[20px] font-normal leading-[28px] text-[#18181A]">Recent files</h1>

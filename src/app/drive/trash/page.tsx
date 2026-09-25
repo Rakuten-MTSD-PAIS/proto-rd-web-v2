@@ -20,7 +20,10 @@ const TRASH_COLUMNS = "grid-cols-[36px_minmax(0,1fr)] lg:grid-cols-[36px_minmax(
 export default function TrashPage() {
   const router = useRouter();
   function openItem(item: DriveItem) {
-    if (item.type === "folder") return;
+    if (item.type === "folder") {
+      router.push(`/drive/folder/${item.id}`);
+      return;
+    }
     router.push(`/preview/${item.id}`);
   }
   const [viewMode, handleViewModeChange] = useViewMode();

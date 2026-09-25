@@ -354,6 +354,14 @@ input:focus-visible {
   --color-border: var(--border);
   --color-border-subtle: var(--border-subtle);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-disable: var(--disable);
+  --color-disable-foreground: var(--disable-foreground);
+  --color-border-disable: var(--border-disable);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
